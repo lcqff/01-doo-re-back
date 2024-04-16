@@ -6,6 +6,10 @@
 ### Introduce
 두레(DooRe)는 **팀이 함께 협업하여 다른 팀과 경쟁하기 위한 팀간 경쟁 서비스**로, 주민들이 마을 단위로 둔 공동 노동 조직 '**두레**'에서 이름을 따왔습니다.
 
+### Deployment
+운영서버: https://www.doore.kro.kr <br>
+Rest Docs: https://www.doore.kro.kr/docs/doore.html
+
 # 기술 스택
 
 <div align="center">
@@ -38,9 +42,38 @@
 ![IntelliJ](https://img.shields.io/badge/IntelliJ-000000?style=for-the-badge&logo=intellijidea&logoColor=white)
 </div>
 
+#Structure
+```
+─ src
+   ├─ main
+   │  ├─ java
+   │  │  └─ doore
+   │  │     ├─ DooreApplication.java
+   │  │     ├─ base
+   │  │     │  ├─ BaseEntity.java
+   │  │     │  ├─ BaseException.java
+   │  │     │  └─ BaseExceptionType.java
+   │  │     ├─ crop
+   │  │     ├─ garden
+   │  │     ├─ member
+   │  │     ├─ study
+   │  │     └─ team
+   │  │        └─ api
+   │  │        └─ application
+   │  │           └─ dto
+   │  │        └─ domain
+   │  │           └─ repository
+   │  │        └─ exception
+   │  │           └─ TeamException.java
+   │  │           └─ TeamExceptionType.java
+   │  └─ resources
+   │     ├─ application.yml
+   │     └─ schema.sql
+   └─ test
+```
 
 
-# 기능
+# Features
 
 ![메인페이지 - 로그인전](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/3df8a758-f636-4c41-921d-be50a76276ca)
 ### 소셜 로그인
