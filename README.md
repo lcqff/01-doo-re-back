@@ -81,7 +81,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 
 </div>
 
-## 기술 스택
+## :pencil2: 기술 스택
 
 <div align="center">
 
@@ -113,7 +113,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 ![IntelliJ](https://img.shields.io/badge/IntelliJ-000000?style=for-the-badge&logo=intellijidea&logoColor=white)
 </div>
 
-## Structure
+## :desktop_computer: Structure
 ```
 ─ src
    ├─ main
@@ -143,7 +143,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
    └─ test
 ```
 
-## 역할 분담
+## :hand: 역할 분담
 
 #### 임연후(팜)
 - **BackEnd**: 스터디 CRUD, 참여자 CRUD, S3 파일 저장, 학습자료 CRUD, RestDocs 세팅, Cors 설정
@@ -162,7 +162,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 - **BackEnd**: S3 이미지 저장, 팀원 초대 링크 생성, 팀원 추가
 - **Infra**: CICD 파이프라인 구축, 백엔드 서버 도커 파일 작성
 
-## Features
+## :seedling: Features
 
 ![메인페이지 - 로그인전](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/3df8a758-f636-4c41-921d-be50a76276ca)
 ### 소셜 로그인
