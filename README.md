@@ -129,10 +129,10 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
    │  │     ├─ member
    │  │     ├─ study
    │  │     └─ team
-   │  │        └─ api
-   │  │        └─ application
+   │  │        ├─ api
+   │  │        ├─ application
    │  │        │  └─ dto
-   │  │        └─ domain
+   │  │        ├─ domain
    │  │        │  └─ repository
    │  │        └─ exception
    │  │           ├─ TeamException.java
