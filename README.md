@@ -1,16 +1,87 @@
 ![image](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4ba1e7fc-06ac-4c98-9f2f-e34744e888a2)
 # <div align="center">01-doo-re-back</div> 
 <div align="center">BDD 1기 프로젝트 두레(DooRe)의 백엔드 레파지토리입니다.</div>
+<br>
 
 
-### Introduce
 두레(DooRe)는 **팀이 함께 협업하여 다른 팀과 경쟁하기 위한 팀간 경쟁 서비스**로, 주민들이 마을 단위로 둔 공동 노동 조직 '**두레**'에서 이름을 따왔습니다.
+
+- **경쟁**: Github의 잔디를 모티브로 한 '텃밭'이 팀별로 존재 하며, 이름 지표로 팀 랭킹이 매겨집니다.
+- **협업**: 팀원들은 스터디, 학습자료 업로드 등의 활동을 통해 팀의 '텃밭'에 기여할 수 있습니다.
+- **포토폴리오**: '스터디 카드'를 통해 회원이 참여했던 스터디에서 개인이 착습한 내용과 업로드한 학습 자료를 정리된 레이아웃으로 제공합니다.
 
 ### Deployment
 운영서버: https://www.doore.kro.kr <br>
 Rest Docs: https://www.doore.kro.kr/docs/doore.html
+<br><br>
 
-# 기술 스택
+## 🧑🏻‍💻 기획 & 개발
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      임연후
+    </td>    
+    <td align="center">
+      이수빈
+    </td>
+    <td align="center">
+      손현경
+    </td>
+    <td align="center">
+      송세연
+    </td>
+    <td align="center">
+      이지민 
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/lcqff">
+        <img src="https://github.com/lcqff.png" width="80" alt="lcqff"/>
+        <br/>
+        <sub><b>lcqff</b></sub>
+      </a>
+      <br/>
+    </td>
+    <td align="center">
+      <a href="https://github.com/02ggang9">
+      <img src="https://github.com/02ggang9.png" width="80" alt="02ggang9"/>
+      <br />
+      <sub><b>02ggang9</b></sub>
+      </a>
+      <br/>
+    </td>
+    <td align="center">
+      <a href="https://github.com/shkisme">
+      <img src="https://github.com/shkisme.png" width="80" alt="shkisme"/>
+      <br />
+      <sub><b>shkisme</b></sub>
+      </a>
+      <br/>
+    </td>
+        <td align="center">
+      <a href="https://github.com/amaran-th">
+      <img src="https://github.com/amaran-th.png" width="80" alt="amaran-th"/>
+      <br />
+      <sub><b>amaranth</b></sub>
+      </a>
+      <br/>
+    </td>
+        <td align="center">
+      <a href="https://github.com/JJimini">
+      <img src="https://github.com/JJimini.png" width="80" alt="JJimini"/>
+      <br />
+      <sub><b>JJimini</b></sub>
+      </a>
+      <br/>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+## 기술 스택
 
 <div align="center">
 
@@ -42,7 +113,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 ![IntelliJ](https://img.shields.io/badge/IntelliJ-000000?style=for-the-badge&logo=intellijidea&logoColor=white)
 </div>
 
-# Structure
+## Structure
 ```
 ─ src
    ├─ main
@@ -72,8 +143,26 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
    └─ test
 ```
 
+## 역할 분담
 
-# Features
+#### 임연후(팜)
+- **BackEnd**: 스터디 CRUD, 참여자 CRUD, S3 파일 저장, 학습자료 CRUD, RestDocs 세팅, Cors 설정
+
+#### 송세연 (아마란스)
+- **BackEnd**: 소셜 로그인, 팀원 목록 조회 및 검색
+- **Infra**: 배포 서버 CICD 작성, 운영서버 Redis 세팅
+  
+#### 이수빈(짱구)
+- **Infra**: CICD 파이프라인 구축, 백엔드 서버 도커 파일 작성, HTTPS 적용, CICD 캐싱 적용, CICD DB Docker 고도화, YML 서브모듈 도입, NGINX 설정
+
+#### 이지민(미나)
+- **BackEnd**: 커리큘럼 CRUD, 커리큘럼 관리
+
+#### 손현경(보름)
+- **BackEnd**: S3 이미지 저장, 팀원 초대 링크 생성, 팀원 추가
+- **Infra**: CICD 파이프라인 구축, 백엔드 서버 도커 파일 작성
+
+## Features
 
 ![메인페이지 - 로그인전](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/3df8a758-f636-4c41-921d-be50a76276ca)
 ### 소셜 로그인
@@ -131,52 +220,3 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 
 ### 알림
 데모 이후 개발
-
-# 🧑🏻‍💻 기획 & 개발
-<div align="center">
-  <table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/lcqff">
-        <img src="https://github.com/lcqff.png" width="80" alt="lcqff"/>
-        <br/>
-        <sub><b>lcqff</b></sub>
-      </a>
-      <br/>
-    </td>
-    <td align="center">
-      <a href="https://github.com/02ggang9">
-      <img src="https://github.com/02ggang9.png" width="80" alt="02ggang9"/>
-      <br />
-      <sub><b>02ggang9</b></sub>
-      </a>
-      <br/>
-    </td>
-    <td align="center">
-      <a href="https://github.com/shkisme">
-      <img src="https://github.com/shkisme.png" width="80" alt="shkisme"/>
-      <br />
-      <sub><b>shkisme</b></sub>
-      </a>
-      <br/>
-    </td>
-        <td align="center">
-      <a href="https://github.com/amaran-th">
-      <img src="https://github.com/amaran-th.png" width="80" alt="amaran-th"/>
-      <br />
-      <sub><b>amaranth</b></sub>
-      </a>
-      <br/>
-    </td>
-        <td align="center">
-      <a href="https://github.com/JJimini">
-      <img src="https://github.com/JJimini.png" width="80" alt="JJimini"/>
-      <br />
-      <sub><b>JJimini</b></sub>
-      </a>
-      <br/>
-    </td>
-  </tr>
-</table>
-
-</div>
