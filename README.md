@@ -131,11 +131,11 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
    │  │     └─ team
    │  │        └─ api
    │  │        └─ application
-   │  │           └─ dto
+   │  │        │  └─ dto
    │  │        └─ domain
-   │  │           └─ repository
+   │  │        │  └─ repository
    │  │        └─ exception
-   │  │           └─ TeamException.java
+   │  │           ├─ TeamException.java
    │  │           └─ TeamExceptionType.java
    │  └─ resources
    │     ├─ application.yml
