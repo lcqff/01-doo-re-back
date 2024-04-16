@@ -164,17 +164,27 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 
 ## :seedling: Features
 
-![메인페이지 - 로그인전](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/3df8a758-f636-4c41-921d-be50a76276ca)
 ### 소셜 로그인
-- **구글 계정**을 통한 소셜 로그인을 지원합니다. 구글 계정만 있다면 누구나 두레에 가입할 수 있습니다.
+- 구글 계정을 통한 소셜 로그인을 지원합니다. 구글 계정만 있다면 누구나 두레에 가입할 수 있습니다.  
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>소셜 로그인</strong>
+    </td>    
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/3df8a758-f636-4c41-921d-be50a76276ca"/>
+    </td>
+  </tr>
+  </table>
+</div>
 
 
-![메인페이지2 - 팀랭킹](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/6d66fb5d-1d06-472a-bc42-909501e20a53)
 ### 팀 랭킹
 - **텃밭**: Github의 잔디를 모티브로 한 '텃밭'이 팀별로 주어지며, 이름 지표로 팀 랭킹이 매겨집니다.
 - **협업**: 팀원들은 스터디, 학습자료 업로드 등의 팀 활동을 통해 팀의 '텃밭'에 기여할 수 있습니다.
-
-![팀페이지 - 사이드바 closed](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/e93c7626-955d-4519-962f-839c45d640a4)
 ### 팀원
 - **팀원 목록**: 해당 팀에 참여하고 있는 회원 목록을 제공합니다.
 - **초대**: 팀장은 초대 버튼을 통해 팀에 새로운 회원을 초대할 수 있습니다.
@@ -182,41 +192,139 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 ### 팀 활동
 - **스터디**: 팀에서 진행중인 스터디 목록과, 그 진행률을 확인할 수 있습니다.
 - **학습자료**: 팀에 업로드된 학습자료 목록을 확인할 수 있습니다.
-- ~**작물창고**~
+- ~**작물창고**: 데모 이후 개발~
 
-![스터디페이지- 사이드바 closed](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4f351a69-dea3-4c97-aa1d-c2313c8a2558)
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>팀 랭킹</strong>
+    </td>    
+    <td align="center">
+      <strong>팀 활동</strong>
+    </td>   
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/6d66fb5d-1d06-472a-bc42-909501e20a53"/>
+    </td>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/e93c7626-955d-4519-962f-839c45d640a4"/>
+    </td>
+  </tr>
+  </table>
+</div>
+
 ### 스터디
 - **참여자 목록**: 해당 스터디에 참여하고 있는 회원 목록을 제공합니다.
 - **스터디 진행률**: 모든 팀원의 진척도를 합산하여 스터디 진행률을 계산합니다. 스터디 진행률에 따라 작물 일러스트가 성장합니다.
 - **스터디 커리큘럼**: 개인별로 진행한 커리큘럼을 완료처리하거나, 커리큘럼의 순서를 바꿀 수 있습니다.
 - **스터디 피드**: 모든 스터디 참여자의 진행상황을 피드에서 확인할 수 있습니다. 참여자가 커리큘럼을 완료하거나 학습자료를 업로드 할시 피드가 업데이트 됩니다.
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>스터디</strong>
+    </td>    
+    <td align="center">
+      <string>커리큘럼 수정</string>
+    </td>
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4f351a69-dea3-4c97-aa1d-c2313c8a2558"/>
+    </td>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/68d0eb34-0db9-450f-9e72-673e9a2083ed"/>
+    </td>
+  </tr>
+  </table>
+</div>
+
+
 ### 학습자료
 - **학습자료**: 스터디에서 공부한 내용을 학습자료 형태로 업로드 할 수 있습니다. 스터디에 업로드한 학습자료는 팀에도 공유됩니다.
 - ~북마크: 업로드된 학습자료를 북마크할 수 있습니다.~
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>학습자료-이미지</strong>
+    </td>    
+    <td align="center">
+      <strong>학습자료-파일</strong>
+    </td>    
+    <td align="center">
+      <strong>학습자료-링크</strong>
+    </td>    
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/e796a246-8f88-457d-b7d8-b1cf23b1cd6c"/>
+    </td>
+    <td>
+    <img width="600" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/655614d7-b3d4-439f-8155-281d29067f6a">
+    </td>
+    <td>
+    <img width="600" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/28c7db00-f31b-4a0b-aed0-4f4401873fc2">
+    </td>
+  </tr>
+  </table>
+</div>
 
-<img width="1986" alt="스터디페이지- 사이드바 closed" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/aa1ccb01-e81c-4bc0-a5eb-8448fe50b6bf">
-
-![수료증 페이지 (1)](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/bb8e650c-179e-426b-b652-dcf806154e6b)
-
-
-### 학습자료
-데모 이후 개발
-
-![마이페이지](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/71449deb-8bcb-4ea3-900c-8fef86b930d8)
 ### 마이페이지
 데모 이후 개발
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>마이페이지</strong>
+    </td>    
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/71449deb-8bcb-4ea3-900c-8fef86b930d8"/>
+    </td>
+  </tr>
+  </table>
+</div>
 
-
-
-![수료증 페이지](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4d4c805a-a662-4ce4-97f5-8e9f501a4c4a)
-![수료증 페이지 (2)](https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/ab57de7b-7c31-480b-ac12-4bedacf62b69)
-
-### 수료증
+### 스터디 카드
 데모 이후 개발
-
-
-
-<img width="1986" alt="알림페이지 (1)" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4a4949fb-015d-47ca-97ef-3566b17a6b2f">
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>스터디 카드</strong>
+    </td>    
+    <td align="center">
+      <strong>스터디 카드 외부 공유</strong>
+    </td>  
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/bb8e650c-179e-426b-b652-dcf806154e6b"/>
+    </td>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/ab57de7b-7c31-480b-ac12-4bedacf62b69"/>
+    </td>
+  </tr>
+  </table>
+</div>
 
 ### 알림
 데모 이후 개발
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      <strong>알림 페이지</strong>
+    </td>    
+  </tr>
+  <tr>
+    <td>
+    <img width="600px" src="https://github.com/BDD-CLUB/01-doo-re-back/assets/71930280/4a4949fb-015d-47ca-97ef-3566b17a6b2f"/>
+    </td>
+  </tr>
+  </table>
+</div>
