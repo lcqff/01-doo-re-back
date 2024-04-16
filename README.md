@@ -10,7 +10,7 @@
 - **협업**: 팀원들은 스터디, 학습자료 업로드 등의 활동을 통해 팀의 '텃밭'에 기여할 수 있습니다.
 - **포토폴리오**: '스터디 카드'를 통해 회원이 참여했던 스터디에서 개인이 착습한 내용과 업로드한 학습 자료를 정리된 레이아웃으로 제공합니다.
 
-### Deployment
+<br>
 운영서버: https://www.doore.kro.kr <br>
 Rest Docs: https://www.doore.kro.kr/docs/doore.html
 <br><br>
