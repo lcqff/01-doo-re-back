@@ -5,9 +5,9 @@ import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 
 import doore.crop.domain.Crop;
-import doore.crop.domain.dto.response.CropReferenceResponse;
 import doore.crop.domain.repository.CropRepository;
 import doore.crop.exception.CropException;
+import doore.crop.response.CropReferenceResponse;
 import doore.study.application.dto.response.StudyResponse;
 import doore.study.application.dto.response.personalStudyResponse.PersonalCurriculumItemResponse;
 import doore.study.application.dto.response.personalStudyResponse.PersonalStudyDetailResponse;
