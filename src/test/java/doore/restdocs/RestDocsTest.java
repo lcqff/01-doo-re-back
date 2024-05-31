@@ -9,6 +9,8 @@ import doore.document.api.DocumentController;
 import doore.attendance.application.AttendanceCommandService;
 import doore.document.application.DocumentCommandService;
 import doore.document.application.DocumentQueryService;
+import doore.garden.api.GardenController;
+import doore.garden.application.GardenQueryService;
 import doore.helper.ApiTestHelper;
 import doore.login.api.LoginController;
 import doore.login.application.LoginService;
@@ -55,6 +57,7 @@ import org.springframework.web.filter.CharacterEncodingFilter;
         AttendanceController.class,
         CurriculumItemController.class,
         LoginController.class,
+        GardenController.class,
 })
 public abstract class RestDocsTest extends ApiTestHelper {
 
@@ -66,7 +69,6 @@ public abstract class RestDocsTest extends ApiTestHelper {
 
     @MockBean
     protected CurriculumItemCommandService curriculumItemCommandService;
-
 
     @MockBean
     protected CurriculumItemQueryService curriculumItemQueryService;
@@ -97,9 +99,12 @@ public abstract class RestDocsTest extends ApiTestHelper {
 
     @MockBean
     protected ParticipantQueryService participantQueryService;
-    
+
     @MockBean
     protected TeamQueryService teamQueryService;
+
+    @MockBean
+    protected GardenQueryService gardenQueryService;
 
     @MockBean
     protected JwtTokenGenerator jwtTokenGenerator;

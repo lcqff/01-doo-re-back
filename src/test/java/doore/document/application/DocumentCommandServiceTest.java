@@ -3,7 +3,8 @@ package doore.document.application;
 import static doore.document.domain.DocumentGroupType.STUDY;
 import static doore.document.exception.DocumentExceptionType.LINK_DOCUMENT_NEEDS_URL;
 import static doore.document.exception.DocumentExceptionType.NO_FILE_ATTACHED;
-import static doore.study.StudyFixture.algorithmStudy;
+import static doore.garden.domain.GardenType.DOCUMENT_UPLOAD;
+import static doore.study.StudyFixture.createStudy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -23,6 +24,8 @@ import doore.document.domain.repository.FileRepository;
 import doore.document.exception.DocumentException;
 import doore.file.application.S3DocumentFileService;
 import doore.file.application.S3ImageFileService;
+import doore.garden.domain.Garden;
+import doore.garden.domain.repository.GardenRepository;
 import doore.helper.IntegrationTest;
 import doore.member.domain.Member;
 import doore.study.domain.Study;
@@ -38,7 +41,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,30 +53,30 @@ public class DocumentCommandServiceTest extends IntegrationTest {
     DocumentRepository documentRepository;
 
     @Autowired
+    GardenRepository gardenRepository;
+
+    @Autowired
     TeamRepository teamRepository;
 
     @Autowired
     FileRepository fileRepository;
 
-    @MockBean
+    @Autowired
     S3ImageFileService s3ImageFileService;
 
-    @MockBean
+    @Autowired
     S3DocumentFileService s3DocumentFileService;
 
+    @Autowired
     DocumentCommandService documentCommandService;
     DocumentCreateRequest documentRequest;
     Study study;
 
     @BeforeEach
     void setUp() {
-        documentCommandService = new DocumentCommandService(documentRepository, teamRepository, studyRepository,
-                fileRepository, s3ImageFileService, s3DocumentFileService);
-
         documentRequest = new DocumentCreateRequest("발표 자료", "이번주 발표자료입니다.", DocumentAccessType.TEAM,
                 DocumentType.FILE, null, mock(Member.class).getId());
-        study = algorithmStudy();
-        studyRepository.save(study);
+        study = createStudy();
     }
 
     @Nested
@@ -279,5 +281,20 @@ public class DocumentCommandServiceTest extends IntegrationTest {
         //then
         List<Document> documents = documentRepository.findAll();
         assertTrue(documents.get(0).getIsDeleted());
+    }
+
+    @Test
+    @DisplayName("[성공] 학습자료 업로드시 정상적으로 텃밭을 생성할 수 있다.")
+    public void createGarden_학습자료_업로드시_정상적으로_텃밭에_반영된다_성공() throws Exception {
+        //given
+        Document document = new DocumentFixture().buildDocument();
+
+        //when
+        documentCommandService.createGarden(document);
+
+        //then
+        Garden garden = gardenRepository.findAll().get(0);
+        assertEquals(garden.getContributionId(), document.getId());
+        assertEquals(garden.getType(), DOCUMENT_UPLOAD);
     }
 }
