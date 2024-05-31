@@ -1,5 +1,7 @@
 package doore.team.api;
 
+import doore.member.domain.Member;
+import doore.resolver.LoginMember;
 import doore.team.application.TeamCommandService;
 import doore.team.application.TeamQueryService;
 import doore.team.application.dto.request.TeamCreateRequest;
@@ -36,36 +38,39 @@ public class TeamController {
     private final TeamCommandService teamCommandService;
     private final TeamQueryService teamQueryService;
 
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE}) // 회원
     public ResponseEntity<Void> createTeam(
             @Valid @RequestPart final TeamCreateRequest request,
-            @RequestPart(required = false) final MultipartFile file
+            @RequestPart(required = false) final MultipartFile file,
+            @LoginMember Member member
     ) {
-        teamCommandService.createTeam(request, file);
+        teamCommandService.createTeam(request, file, member.getId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/{teamId}")
+    @PutMapping("/{teamId}") // 팀장
     public ResponseEntity<Void> updateTeam(
             @PathVariable final Long teamId,
-            @RequestBody final TeamUpdateRequest request
+            @RequestBody final TeamUpdateRequest request,
+            @LoginMember Member member
     ) {
-        teamCommandService.updateTeam(teamId, request);
+        teamCommandService.updateTeam(teamId, request, member.getId());
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{teamId}/image")
+    @PatchMapping("/{teamId}/image") // 팀장
     public ResponseEntity<Void> updateTeamImage(
             @PathVariable final Long teamId,
-            @RequestPart(required = false) final MultipartFile file
+            @RequestPart(required = false) final MultipartFile file,
+            @LoginMember Member member
     ) {
-        teamCommandService.updateTeamImage(teamId, file);
+        teamCommandService.updateTeamImage(teamId, file, member.getId());
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{teamId}")
-    public ResponseEntity<Void> deleteTeam(@PathVariable final Long teamId) {
-        teamCommandService.deleteTeam(teamId);
+    @DeleteMapping("/{teamId}") // 팀장
+    public ResponseEntity<Void> deleteTeam(@PathVariable final Long teamId, @LoginMember Member member) {
+        teamCommandService.deleteTeam(teamId, member.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -77,24 +82,26 @@ public class TeamController {
         return ResponseEntity.ok(teamInviteCodeResponse);
     }
 
-    @PostMapping("/{teamId}/join")
+    @PostMapping("/{teamId}/join") // 회원
     public ResponseEntity<Void> joinTeam(
             @PathVariable final Long teamId,
-            @Valid @RequestBody final TeamInviteCodeRequest request
+            @Valid @RequestBody final TeamInviteCodeRequest request,
+            @LoginMember Member member
     ) {
-        teamCommandService.joinTeam(teamId, request);
+        teamCommandService.joinTeam(teamId, request, member.getId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/members/{memberId}")
-    public ResponseEntity<List<TeamReferenceResponse>> getMyTeams(@PathVariable final Long memberId) {
-        // TODO: 3/22/24 토큰의 주인이 memberId와 동일인물인지 검증
-        return ResponseEntity.ok(teamQueryService.findMyTeams(memberId));
+    @GetMapping("/members/{memberId}") // 회원
+    public ResponseEntity<List<TeamReferenceResponse>> getMyTeams(@PathVariable final Long memberId,
+                                                                  @LoginMember Member member) {
+        // TODO: 3/22/24 토큰의 주인이 memberId와 동일인물인지 검증 (2024/5/14 완료 -> 서비스에서 진행)
+        return ResponseEntity.ok(teamQueryService.findMyTeams(memberId, member.getId()));
     }
 
     @GetMapping("/members/{memberId}/studies")
-    public ResponseEntity<List<MyTeamsAndStudiesResponse>> getMyTeamsAndStudies(@PathVariable final Long memberId) {
-        // TODO: 5/16/24 토큰의 주인이 memberId와 동일인물인지 검증
-        return ResponseEntity.ok(teamQueryService.findMyTeamsAndStudies(memberId));
+    public ResponseEntity<List<MyTeamsAndStudiesResponse>> getMyTeamsAndStudies(@PathVariable final Long memberId,
+                                                                                @LoginMember Member member) {
+        return ResponseEntity.ok(teamQueryService.findMyTeamsAndStudies(memberId, member.getId()));
     }
 }

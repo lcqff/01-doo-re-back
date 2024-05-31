@@ -1,10 +1,20 @@
 package doore.team.application;
 
+import static doore.member.domain.TeamRoleType.ROLE_팀원;
+import static doore.member.domain.TeamRoleType.ROLE_팀장;
+import static doore.member.exception.MemberExceptionType.ALREADY_JOIN_TEAM_MEMBER;
+import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER;
+import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_IN_TEAM;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.team.exception.TeamExceptionType.EXPIRED_LINK;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 import static doore.team.exception.TeamExceptionType.NOT_MATCH_LINK;
 
 import doore.file.application.S3ImageFileService;
+import doore.member.domain.TeamRole;
+import doore.member.domain.repository.MemberRepository;
+import doore.member.domain.repository.TeamRoleRepository;
+import doore.member.exception.MemberException;
 import doore.team.application.dto.request.TeamCreateRequest;
 import doore.team.application.dto.request.TeamInviteCodeRequest;
 import doore.team.application.dto.request.TeamUpdateRequest;
@@ -26,13 +36,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class TeamCommandService {
 
     private final TeamRepository teamRepository;
+    private final MemberRepository memberRepository;
+    private final TeamRoleRepository teamRoleRepository;
     private final S3ImageFileService s3ImageFileService;
     private final RedisUtil redisUtil;
 
     private static final String INVITE_LINK_PREFIX = "teamId=%d";
 
-    public void createTeam(final TeamCreateRequest request, final MultipartFile file) {
-        // TODO: 팀 생성자를 팀 관리자로 등록
+    public void createTeam(final TeamCreateRequest request, final MultipartFile file, final Long memberId) {
+        // TODO: 팀 생성자를 팀 관리자로 등록 (2024/5/9 완료)
+        validateExistMember(memberId);
         final String imageUrl = s3ImageFileService.upload(file);
         try {
             final Team team = Team.builder()
@@ -41,17 +54,26 @@ public class TeamCommandService {
                     .imageUrl(imageUrl)
                     .build();
             teamRepository.save(team);
+
+            final TeamRole teamRole = TeamRole.builder()
+                    .memberId(memberId)
+                    .teamId(team.getId())
+                    .teamRoleType(ROLE_팀장)
+                    .build();
+            teamRoleRepository.save(teamRole);
         } catch (Exception e) {
             s3ImageFileService.deleteFile(imageUrl);
         }
     }
 
-    public void updateTeam(final Long teamId, final TeamUpdateRequest request) {
+    public void updateTeam(final Long teamId, final TeamUpdateRequest request, final Long memberId) {
+        validateExistTeamLeader(memberId);
         final Team team = validateExistTeam(teamId);
         team.update(request.name(), request.description());
     }
 
-    public void updateTeamImage(final Long teamId, final MultipartFile file) {
+    public void updateTeamImage(final Long teamId, final MultipartFile file, final Long memberId) {
+        validateExistTeamLeader(memberId);
         final Team team = validateExistTeam(teamId);
 
         if (team.hasImage()) {
@@ -62,13 +84,15 @@ public class TeamCommandService {
         team.updateImageUrl(newImageUrl);
     }
 
-    public void deleteTeam(final Long teamId) {
+    public void deleteTeam(final Long teamId, final Long memberId) {
+        validateExistTeamLeader(memberId);
         final Team team = validateExistTeam(teamId);
         teamRepository.delete(team);
         if (team.hasImage()) {
             s3ImageFileService.deleteFile(team.getImageUrl());
         }
         // TODO: 2/2/24 팀이 삭제될 시 연관된 스터디와, 커리큘럼도 삭제
+
     }
 
     private Team validateExistTeam(final Long teamId) {
@@ -88,13 +112,21 @@ public class TeamCommandService {
         return new TeamInviteCodeResponse(link.get());
     }
 
-    public void joinTeam(final Long teamId, final TeamInviteCodeRequest request) {
+    public void joinTeam(final Long teamId, final TeamInviteCodeRequest request, final Long memberId) {
         validateExistTeam(teamId);
+        validateExistMember(memberId);
 
         Optional<String> link = redisUtil.getData(INVITE_LINK_PREFIX.formatted(teamId), String.class);
         if (link.isPresent()) {
             validateMatchLink(link.get(), request.code());
-            // TODO: 2/14/24 권한 관련 작업이 추가되면 팀원으로 회원 추가, 이미 가입된 팀원이라면 예외 처리.
+            // TODO: 2/14/24 권한 관련 작업이 추가되면 팀원으로 회원 추가, 이미 가입된 팀원이라면 예외 처리. (2024/5/13 완료)
+            duplicateCheckTeamMember(memberId);
+            TeamRole teamRole = TeamRole.builder()
+                    .teamId(teamId)
+                    .teamRoleType(ROLE_팀원)
+                    .memberId(memberId)
+                    .build();
+            teamRoleRepository.save(teamRole);
         }
         throw new TeamException(EXPIRED_LINK);
     }
@@ -103,5 +135,21 @@ public class TeamCommandService {
         if (!link.equals(userLink)) {
             throw new TeamException(NOT_MATCH_LINK);
         }
+    }
+
+    private void validateExistMember(final Long memberId) {
+        memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
+    }
+
+    private void validateExistTeamLeader(final Long memberId) {
+        TeamRole teamRole = teamRoleRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_TEAM));
+        if (!teamRole.getTeamRoleType().equals(ROLE_팀장)) {
+            throw new MemberException(UNAUTHORIZED);
+        }
+    }
+
+    private void duplicateCheckTeamMember(final Long memberId) {
+        teamRoleRepository.findById(memberId).orElseThrow(() -> new MemberException(ALREADY_JOIN_TEAM_MEMBER));
     }
 }

@@ -3,8 +3,10 @@ package doore.restdocs.docs;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+
 import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
 import static org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders;
+
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
@@ -24,11 +26,13 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 
 public class CurriculumItemApiDocsTest extends RestDocsTest {
     private CurriculumItemManageRequest request;
+    private String accessToken;
     private ParticipantCurriculumItemResponse participantCurriculumItemResponse;
     private ParticipantCurriculumItemResponse otherParticipantCurriculumItemResponse;
     private CurriculumItemResponse curriculumItemResponse;
@@ -39,6 +43,8 @@ public class CurriculumItemApiDocsTest extends RestDocsTest {
                 .curriculumItems(getCurriculumItems())
                 .deletedCurriculumItems(getDeletedCurriculumItems())
                 .build();
+        accessToken = "mocked-access-token";
+        when(jwtTokenGenerator.generateToken(any(String.class))).thenReturn(accessToken);
 
         participantCurriculumItemResponse = new ParticipantCurriculumItemResponse(1L, 1L, false);
         otherParticipantCurriculumItemResponse = new ParticipantCurriculumItemResponse(2L, 1L, true);
@@ -68,11 +74,12 @@ public class CurriculumItemApiDocsTest extends RestDocsTest {
     @Test
     @DisplayName("[성공] 커리큘럼 관리가 정상적으로 이루어진다.")
     public void manageCurriculum_커리큘럼_관리가_정상적으로_이루어진다() throws Exception {
-        doNothing().when(curriculumItemCommandService).manageCurriculum(any(), any());
+        doNothing().when(curriculumItemCommandService).manageCurriculum(any(), any(), any());
 
         mockMvc.perform(RestDocumentationRequestBuilders.post("/studies/{studyId}/curriculums", 1)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isCreated())
                 .andDo(document("curriculum-manage", pathParameters(
                                 parameterWithName("studyId").description("스터디 id")),
@@ -92,10 +99,11 @@ public class CurriculumItemApiDocsTest extends RestDocsTest {
     @Test
     @DisplayName("[성공] 커리큘럼 상태가 정상적으로 변경된다.")
     public void checkCurriculum_커리큘럼_상태가_정상적으로_변경된다() throws Exception {
-        doNothing().when(curriculumItemCommandService).checkCurriculum(any(), any());
+        doNothing().when(curriculumItemCommandService).checkCurriculum(any(), any(), any());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.patch("/curriculums/{curriculumId}/{participantId}/check", 1, 1))
+                        RestDocumentationRequestBuilders.patch("/curriculums/{curriculumId}/{participantId}/check", 1, 1)
+                                .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isNoContent())
                 .andDo(document("curriculum-check", pathParameters(
                         parameterWithName("curriculumId").description("커리큘럼 id"),

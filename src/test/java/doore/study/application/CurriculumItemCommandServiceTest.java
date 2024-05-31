@@ -1,18 +1,18 @@
 package doore.study.application;
 
+import static doore.member.MemberFixture.미나;
+import static doore.member.MemberFixture.아마란스;
+import static doore.member.domain.StudyRoleType.ROLE_스터디원;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.garden.domain.GardenType.STUDY_CURRICULUM_COMPLETION;
 import static doore.study.CurriculumItemFixture.curriculumItem;
+
 import static doore.study.StudyFixture.algorithmStudy;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_PARTICIPANT;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 import doore.garden.domain.Garden;
 import doore.garden.domain.repository.GardenRepository;
@@ -20,8 +20,12 @@ import doore.helper.IntegrationTest;
 import doore.member.MemberFixture;
 import doore.member.domain.Member;
 import doore.member.domain.Participant;
+import doore.member.domain.StudyRole;
+import doore.member.domain.StudyRoleType;
 import doore.member.domain.repository.MemberRepository;
 import doore.member.domain.repository.ParticipantRepository;
+import doore.member.domain.repository.StudyRoleRepository;
+import doore.member.exception.MemberException;
 import doore.study.application.dto.request.CurriculumItemManageDetailRequest;
 import doore.study.application.dto.request.CurriculumItemManageRequest;
 import doore.study.domain.CurriculumItem;
@@ -40,21 +44,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CurriculumItemCommandServiceTest extends IntegrationTest {
-
     @Autowired
     private CurriculumItemCommandService curriculumItemCommandService;
     @Autowired
-    protected CurriculumItemRepository curriculumItemRepository;
+    private CurriculumItemRepository curriculumItemRepository;
     @Autowired
-    protected StudyRepository studyRepository;
+    private StudyRepository studyRepository;
     @Autowired
-    protected MemberRepository memberRepository;
+    private MemberRepository memberRepository;
     @Autowired
-    protected ParticipantRepository participantRepository;
+    private ParticipantRepository participantRepository;
     @Autowired
-    protected ParticipantCurriculumItemRepository participantCurriculumItemRepository;
+    private ParticipantCurriculumItemRepository participantCurriculumItemRepository;
     @Autowired
-    protected GardenRepository gardenRepository;
+    private StudyRoleRepository studyRoleRepository;
+    @Autowired
+    private GardenRepository gardenRepository;
 
     private Study study;
     private CurriculumItem curriculumItem1;
@@ -63,6 +68,8 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     private Long invalidCurriculumItemId;
     private Long invalidStudyId;
     private CurriculumItemManageRequest request;
+    private StudyRole studyRole;
+    private Long memberId;
 
     @BeforeEach
     void setUp() {
@@ -82,6 +89,13 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
                 .curriculumItems(getCurriculumItems())
                 .deletedCurriculumItems(getDeletedCurriculumItems())
                 .build();
+
+        memberId = memberRepository.save(미나()).getId();
+        studyRole = studyRoleRepository.save(StudyRole.builder()
+                .studyRoleType(StudyRoleType.ROLE_스터디장)
+                .studyId(study.getId())
+                .memberId(memberId)
+                .build());
     }
 
     private List<CurriculumItemManageDetailRequest> getCurriculumItems() {
@@ -107,7 +121,7 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @DisplayName("[실패] 존재하지 않는 커리큘럼의 완료 상태를 변경할 수 없다.")
     public void checkCurriculum_존재하지_않는_커리큘럼의_완료_상태를_변경할_수_없다() throws Exception {
         assertThatThrownBy(() -> {
-            curriculumItemCommandService.checkCurriculum(1L, invalidCurriculumItemId);
+            curriculumItemCommandService.checkCurriculum(1L, invalidCurriculumItemId, memberId);
         }).isInstanceOf(StudyException.class).hasMessage(NOT_FOUND_PARTICIPANT.errorMessage());
     }
 
@@ -122,15 +136,15 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
                 .studyId(study.getId())
                 .build();
         participantRepository.save(participant);
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
         CurriculumItem curriculumItem = curriculumItemRepository.findById(4L).orElseThrow();
-        curriculumItemCommandService.checkCurriculum(curriculumItem.getId(), participant.getId());
+        curriculumItemCommandService.checkCurriculum(curriculumItem.getId(), participant.getId(), memberId);
         ParticipantCurriculumItem result = participantCurriculumItemRepository.findByCurriculumItemIdAndParticipantId(
                 curriculumItem.getId(), participant.getId()).orElseThrow();
 
         assertThat(result.getIsChecked()).isEqualTo(true);
 
-        curriculumItemCommandService.checkCurriculum(curriculumItem.getId(), participant.getId());
+        curriculumItemCommandService.checkCurriculum(curriculumItem.getId(), participant.getId(), memberId);
 
         assertThat(result.getIsChecked()).isEqualTo(false);
     }
@@ -183,7 +197,7 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[성공] 아이디가 없으면 커리큘럼을 생성한다.")
     public void createCurriculum_아이디가_없으면_커리큘럼을_생성한다() throws Exception {
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
         CurriculumItem resultCurriculumItem = curriculumItemRepository.findById(4L).orElseThrow();
 
         assertThat(resultCurriculumItem.getId()).isEqualTo(4);
@@ -194,14 +208,14 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @DisplayName("[실패] 존재하지 않는 스터디는 커리큘럼이 생성되지 않는다.")
     public void createCurriculum_존재하지_않는_스터디는_커리큘럼이_생성되지_않는다() throws Exception {
         assertThatThrownBy(() -> {
-            curriculumItemCommandService.manageCurriculum(request, invalidStudyId);
+            curriculumItemCommandService.manageCurriculum(request, invalidStudyId, memberId);
         }).isInstanceOf(StudyException.class).hasMessage(NOT_FOUND_STUDY.errorMessage());
     }
 
     @Test
     @DisplayName("[성공] 아이디가 존재하고 아이템 순서가 다르다면 커리큘럼의 아이템 순서를 변경한다.")
     public void updateCurriculum_아이디가_존재하고_아이템_순서가_다르다면_커리큘럼의_아이템_순서를_변경한다() throws Exception {
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
         CurriculumItem resultCurriculumItem = curriculumItemRepository.findById(2L).orElseThrow();
 
         assertThat(resultCurriculumItem.getItemOrder()).isEqualTo(3);
@@ -210,7 +224,7 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[성공] 아이디가 존재하고 내용이 다르다면 커리큘럼의 내용을 변경한다.")
     public void updateCurriculum_아이디가_존재하고_내용이_다르다면_커리큘럼의_내용을_변경한다() throws Exception {
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
         CurriculumItem resultCurriculumItem = curriculumItemRepository.findById(1L).orElseThrow();
 
         assertThat(resultCurriculumItem.getName()).isEqualTo(request.curriculumItems().get(0).name());
@@ -219,7 +233,7 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[성공] 커리큘럼을 삭제하면 정상적으로 삭제된다.")
     public void deleteCurriculum_커리큘럼을_삭제하면_정상적으로_삭제된다() throws Exception {
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
 
         assertThat(curriculumItemRepository.count()).isEqualTo(3);
     }
@@ -227,7 +241,7 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[성공] 모든 과정이 끝나면 아이템 순서에 대해 연속적인 오름차순으로 정렬된다.")
     public void sortCurriculum_모든_과정이_끝나면_아이템_순서에_대해_연속적인_오름차순으로_정렬된다() throws Exception {
-        curriculumItemCommandService.manageCurriculum(request, study.getId());
+        curriculumItemCommandService.manageCurriculum(request, study.getId(), memberId);
 
         List<CurriculumItem> curriculumItems = curriculumItemRepository.findAll();
 
@@ -239,4 +253,18 @@ public class CurriculumItemCommandServiceTest extends IntegrationTest {
         assertThat(curriculumItems.get(2).getName()).isEqualTo("Algorithm Study");
     }
 
+    @Test
+    @DisplayName("[실패] 스터디장이 아니라면 커리큘럼을 수정할 수 없다.")
+    void manageCurriculum_스터디장이_아니라면_커리큘럼을_수정할_수_없다() throws Exception {
+        Member member = memberRepository.save(아마란스());
+        studyRoleRepository.save(StudyRole.builder()
+                .memberId(member.getId())
+                .studyId(study.getId())
+                .studyRoleType(ROLE_스터디원)
+                .build());
+
+        assertThatThrownBy(() -> curriculumItemCommandService.manageCurriculum(request, study.getId(), member.getId()))
+                .isInstanceOf(MemberException.class)
+                .hasMessage(UNAUTHORIZED.errorMessage());
+    }
 }

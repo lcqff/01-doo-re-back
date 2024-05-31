@@ -1,7 +1,12 @@
 package doore.document.application;
 
-import static doore.document.domain.DocumentGroupType.*;
-import static doore.document.exception.DocumentExceptionType.*;
+import static doore.document.domain.DocumentGroupType.STUDY;
+import static doore.document.domain.DocumentGroupType.TEAM;
+import static doore.document.exception.DocumentExceptionType.INVALID_DOCUMENT_TYPE;
+import static doore.document.exception.DocumentExceptionType.LINK_DOCUMENT_NEEDS_URL;
+import static doore.document.exception.DocumentExceptionType.NOT_FOUND_DOCUMENT;
+import static doore.document.exception.DocumentExceptionType.NO_FILE_ATTACHED;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 
@@ -16,6 +21,9 @@ import doore.document.domain.repository.FileRepository;
 import doore.document.exception.DocumentException;
 import doore.file.application.S3DocumentFileService;
 import doore.file.application.S3ImageFileService;
+import doore.member.domain.repository.MemberRepository;
+import doore.member.exception.MemberException;
+
 import doore.garden.domain.Garden;
 import doore.garden.domain.GardenType;
 import doore.garden.domain.repository.GardenRepository;
@@ -38,12 +46,14 @@ public class DocumentCommandService {
     private final TeamRepository teamRepository;
     private final StudyRepository studyRepository;
     private final FileRepository fileRepository;
+    private final MemberRepository memberRepository;
     private final S3ImageFileService s3ImageFileService;
     private final S3DocumentFileService s3DocumentFileService;
     private final GardenRepository gardenRepository;
 
     public void createDocument(DocumentCreateRequest request, List<MultipartFile> multipartFiles,
-                               DocumentGroupType groupType, Long groupId) {
+                               DocumentGroupType groupType, Long groupId, Long memberId) {
+        validateExistMember(memberId);
         validateExistGroup(groupType, groupId);
         validateDocumentType(request.type(), request.url(), multipartFiles);
         Document document = Document.from(request, groupType, groupId);
@@ -123,13 +133,21 @@ public class DocumentCommandService {
         gardenRepository.save(garden);
     }
 
-    public void updateDocument(DocumentUpdateRequest request, Long documentId) {
+    public void updateDocument(DocumentUpdateRequest request, Long documentId, Long memberId) {
+        validateExistMember(memberId);
         Document document = validateExistDocument(documentId);
+        if (!document.isMine(memberId)){
+            throw new MemberException(UNAUTHORIZED);
+        }
         document.update(request.title(), request.description(), request.accessType());
     }
 
-    public void deleteDocument(Long documentId) {
+    public void deleteDocument(Long documentId, Long memberId) {
+        validateExistMember(memberId);
         Document document = validateExistDocument(documentId);
+        if (!document.isMine(memberId)){
+            throw new MemberException(UNAUTHORIZED);
+        }
         deleteGarden(document);
         documentRepository.deleteById(documentId);
     }
@@ -142,5 +160,9 @@ public class DocumentCommandService {
 
     private Document validateExistDocument(Long documentId) {
         return documentRepository.findById(documentId).orElseThrow(() -> new DocumentException(NOT_FOUND_DOCUMENT));
+    }
+
+    private void validateExistMember(Long memberId) {
+        memberRepository.findById(memberId).orElseThrow(() -> new MemberException(UNAUTHORIZED));
     }
 }
