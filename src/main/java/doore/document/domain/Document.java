@@ -3,6 +3,7 @@ package doore.document.domain;
 import static jakarta.persistence.CascadeType.REMOVE;
 
 import doore.base.BaseEntity;
+import doore.document.application.dto.request.DocumentCreateRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -75,6 +76,18 @@ public class Document extends BaseEntity {
         this.isDeleted = false;
     }
 
+    public static Document from(DocumentCreateRequest request, DocumentGroupType groupType, Long groupId) {
+        return Document.builder()
+                .name(request.title())
+                .description(request.description())
+                .groupType(groupType)
+                .groupId(groupId)
+                .accessType(request.accessType())
+                .type(request.type())
+                .uploaderId(request.uploaderId())
+                .build();
+    }
+
     public void update(String name, String description, DocumentAccessType accessType) {
         this.name = name;
         this.description = description;
@@ -84,5 +97,9 @@ public class Document extends BaseEntity {
     public void updateFiles(List<File> files) {
         this.files.clear();
         this.files.addAll(files);
+    }
+
+    public boolean isMine(Long memberId) {
+        return this.uploaderId.equals(memberId);
     }
 }

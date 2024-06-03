@@ -1,7 +1,12 @@
 package doore.document.application;
 
-import static doore.document.domain.DocumentGroupType.*;
-import static doore.document.exception.DocumentExceptionType.*;
+import static doore.document.domain.DocumentGroupType.STUDY;
+import static doore.document.domain.DocumentGroupType.TEAM;
+import static doore.document.exception.DocumentExceptionType.INVALID_DOCUMENT_TYPE;
+import static doore.document.exception.DocumentExceptionType.LINK_DOCUMENT_NEEDS_URL;
+import static doore.document.exception.DocumentExceptionType.NOT_FOUND_DOCUMENT;
+import static doore.document.exception.DocumentExceptionType.NO_FILE_ATTACHED;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 
@@ -16,6 +21,12 @@ import doore.document.domain.repository.FileRepository;
 import doore.document.exception.DocumentException;
 import doore.file.application.S3DocumentFileService;
 import doore.file.application.S3ImageFileService;
+import doore.member.domain.repository.MemberRepository;
+import doore.member.exception.MemberException;
+
+import doore.garden.domain.Garden;
+import doore.garden.domain.GardenType;
+import doore.garden.domain.repository.GardenRepository;
 import doore.study.domain.repository.StudyRepository;
 import doore.study.exception.StudyException;
 import doore.team.domain.TeamRepository;
@@ -31,19 +42,21 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional
 @RequiredArgsConstructor
 public class DocumentCommandService {
-
     private final DocumentRepository documentRepository;
     private final TeamRepository teamRepository;
     private final StudyRepository studyRepository;
     private final FileRepository fileRepository;
+    private final MemberRepository memberRepository;
     private final S3ImageFileService s3ImageFileService;
     private final S3DocumentFileService s3DocumentFileService;
+    private final GardenRepository gardenRepository;
 
     public void createDocument(DocumentCreateRequest request, List<MultipartFile> multipartFiles,
-                               DocumentGroupType groupType, Long groupId) {
+                               DocumentGroupType groupType, Long groupId, Long memberId) {
+        validateExistMember(memberId);
         validateExistGroup(groupType, groupId);
         validateDocumentType(request.type(), request.url(), multipartFiles);
-        Document document = toDocument(request, groupType, groupId);
+        Document document = Document.from(request, groupType, groupId);
 
         documentRepository.save(document);
 
@@ -60,6 +73,8 @@ public class DocumentCommandService {
             List<File> newFiles = saveFiles(filePaths, document);
             document.updateFiles(newFiles);
         }
+
+        createGarden(document);
     }
 
     private void validateExistGroup(DocumentGroupType groupType, Long groupId) {
@@ -78,18 +93,6 @@ public class DocumentCommandService {
         if (!type.equals(DocumentType.URL) && (multipartFiles == null || multipartFiles.isEmpty())) {
             throw new DocumentException(NO_FILE_ATTACHED);
         }
-    }
-
-    private Document toDocument(DocumentCreateRequest request, DocumentGroupType groupType, Long groupId) {
-        return Document.builder()
-                .name(request.title())
-                .description(request.description())
-                .groupType(groupType)
-                .groupId(groupId)
-                .accessType(request.accessType())
-                .type(request.type())
-                .uploaderId(request.uploaderId())
-                .build();
     }
 
     private List<String> uploadFilesToS3(DocumentType type, List<MultipartFile> multipartFiles) {
@@ -125,17 +128,41 @@ public class DocumentCommandService {
         return files;
     }
 
-    public void updateDocument(DocumentUpdateRequest request, Long documentId) {
+    public void createGarden(Document document) {
+        Garden garden = GardenType.getSupplierOf(document.getClass().getSimpleName()).of(document);
+        gardenRepository.save(garden);
+    }
+
+    public void updateDocument(DocumentUpdateRequest request, Long documentId, Long memberId) {
+        validateExistMember(memberId);
         Document document = validateExistDocument(documentId);
+        if (!document.isMine(memberId)){
+            throw new MemberException(UNAUTHORIZED);
+        }
         document.update(request.title(), request.description(), request.accessType());
     }
 
-    public void deleteDocument(Long documentId) {
-        validateExistDocument(documentId);
+    public void deleteDocument(Long documentId, Long memberId) {
+        validateExistMember(memberId);
+        Document document = validateExistDocument(documentId);
+        if (!document.isMine(memberId)){
+            throw new MemberException(UNAUTHORIZED);
+        }
+        deleteGarden(document);
         documentRepository.deleteById(documentId);
+    }
+
+    public void deleteGarden(Document document) {
+        Long contributionId = document.getId();
+        GardenType gardenType = GardenType.getGardenTypeOf(document.getClass().getSimpleName());
+        gardenRepository.deleteByContributionIdAndType(contributionId, gardenType);
     }
 
     private Document validateExistDocument(Long documentId) {
         return documentRepository.findById(documentId).orElseThrow(() -> new DocumentException(NOT_FOUND_DOCUMENT));
+    }
+
+    private void validateExistMember(Long memberId) {
+        memberRepository.findById(memberId).orElseThrow(() -> new MemberException(UNAUTHORIZED));
     }
 }

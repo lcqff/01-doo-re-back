@@ -1,12 +1,10 @@
 package doore.study.api;
 
-import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
-
+import doore.member.domain.Member;
 import doore.member.domain.Participant;
-import doore.member.exception.MemberException;
+import doore.resolver.LoginMember;
 import doore.study.application.ParticipantCommandService;
 import doore.study.application.ParticipantQueryService;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,32 +21,29 @@ public class ParticipantController {
     private final ParticipantCommandService participantCommandService;
     private final ParticipantQueryService participantQueryService;
 
-    @PostMapping("/studies/{studyId}/members/{memberId}")
-    public ResponseEntity<Void> saveParticipant(@PathVariable Long studyId, @PathVariable Long memberId) {
-        participantCommandService.saveParticipant(studyId, memberId);
+    @PostMapping("/studies/{studyId}/members/{memberId}") // 스터디장
+    public ResponseEntity<Void> saveParticipant(@PathVariable Long studyId, @PathVariable Long memberId,
+                                                @LoginMember Member member) {
+        participantCommandService.saveParticipant(studyId, memberId, member.getId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @DeleteMapping("/studies/{studyId}/members/{memberId}")
-    public ResponseEntity<Void> deleteParticipant(@PathVariable Long studyId, @PathVariable Long memberId) {
-        participantCommandService.deleteParticipant(studyId, memberId);
+    @DeleteMapping("/studies/{studyId}/members/{memberId}") // 스터디장
+    public ResponseEntity<Void> deleteParticipant(@PathVariable Long studyId, @PathVariable Long memberId,
+                                                  @LoginMember Member member) {
+        participantCommandService.deleteParticipant(studyId, memberId, member.getId());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @DeleteMapping("/studies/{studyId}/members")
-    public ResponseEntity<Void> withdrawParticipant(@PathVariable Long studyId, HttpServletRequest request) {
-        //Todo: 이후 권한 로직으로 수정
-        String memberId = request.getHeader("Authorization");
-        if (memberId == null) {
-            throw new MemberException(UNAUTHORIZED);
-        }
-        participantCommandService.withdrawParticipant(studyId, Long.parseLong(memberId));
+    @DeleteMapping("/studies/{studyId}/members") // 스터디원
+    public ResponseEntity<Void> withdrawParticipant(@PathVariable Long studyId, @LoginMember Member member) {
+        participantCommandService.withdrawParticipant(studyId, member.getId(), member.getId());
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @GetMapping("/studies/{studyId}/members")
-    public ResponseEntity<List<Participant>> getParticipant(@PathVariable Long studyId) {
-        List<Participant> participants = participantQueryService.findAllParticipants(studyId);
+    @GetMapping("/studies/{studyId}/members") // 스터디장 & 스터디원
+    public ResponseEntity<List<Participant>> getParticipant(@PathVariable Long studyId, @LoginMember Member member) {
+        List<Participant> participants = participantQueryService.findAllParticipants(studyId, member.getId());
         return ResponseEntity.ok(participants);
     }
 }

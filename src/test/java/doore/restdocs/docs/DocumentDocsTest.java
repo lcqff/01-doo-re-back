@@ -30,12 +30,14 @@ import doore.restdocs.RestDocsTest;
 import java.io.FileInputStream;
 import java.time.LocalDate;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockPart;
@@ -43,6 +45,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 public class DocumentDocsTest extends RestDocsTest {
+    private String accessToken;
+
+    @BeforeEach
+    void setUp() {
+        accessToken = "mocked-access-token";
+        when(jwtTokenGenerator.generateToken(any(String.class))).thenReturn(accessToken);
+    }
 
     @Test
     @DisplayName("학습자료를 생성한다.")
@@ -62,7 +71,8 @@ public class DocumentDocsTest extends RestDocsTest {
         mockMvc.perform(multipart("/{groupType}/{groupId}/documents", "teams", 1)
                         .part(mockPart)
                         .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andDo(document("document-create",
@@ -85,7 +95,6 @@ public class DocumentDocsTest extends RestDocsTest {
     }
 
     @Test
-    @Disabled //todo: Could not write JSON 오류 해결
     @DisplayName("학습자료 목록을 조회한다.")
     public void 학습자료_목록을_조회한다() throws Exception {
         //given
@@ -94,17 +103,17 @@ public class DocumentDocsTest extends RestDocsTest {
         DocumentCondensedResponse otherDocumentCondensedResponse =
                 new DocumentCondensedResponse(2L, "학습자료2", "학습자료2 입니다.", LocalDate.parse("2020-02-03"), 2L);
         Page<DocumentCondensedResponse> documentCondensedResponses = new PageImpl<>(
-                List.of(documentCondensedResponse, otherDocumentCondensedResponse));
-
+                List.of(documentCondensedResponse, otherDocumentCondensedResponse), PageRequest.of(0,4),2);
         //when
-        when(documentQueryService.getAllDocument(any(), any(), any(PageRequest.class)))
+        when(documentQueryService.getAllDocument(any(), any(), any(PageRequest.class), any()))
                 .thenReturn(documentCondensedResponses);
 
         //then
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("page", "0");
         params.add("size", "4");
-        mockMvc.perform(get("/{groupType}/{groupId}/documents", "teams", 1).params(params))
+        mockMvc.perform(get("/{groupType}/{groupId}/documents", "teams", 1).params(params)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isOk())
                 .andDo(document("document-get-list", pathParameters(
                                 parameterWithName("groupType").description("학습자료가 속한 그룹(teams/studies)"),
@@ -133,10 +142,10 @@ public class DocumentDocsTest extends RestDocsTest {
                 .build();
 
         //when
-        when(documentQueryService.getDocument(any())).thenReturn(documentDetailResponse);
+        when(documentQueryService.getDocument(any(), any())).thenReturn(documentDetailResponse);
 
         //then
-        mockMvc.perform(get("/{documentId}", 1))
+        mockMvc.perform(get("/{documentId}", 1).header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isOk())
                 .andDo(document("document-get", pathParameters(
                                 parameterWithName("documentId").description("학습자료 id")
@@ -165,7 +174,8 @@ public class DocumentDocsTest extends RestDocsTest {
         //then
         mockMvc.perform(put("/{documentId}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isOk())
                 .andDo(document("document-update",
                         pathParameters(
@@ -182,7 +192,8 @@ public class DocumentDocsTest extends RestDocsTest {
     @Test
     @DisplayName("학습자료를 삭제한다.")
     public void 학습자료를_삭제한다() throws Exception {
-        mockMvc.perform(delete("/{documentId}", 1))
+        mockMvc.perform(delete("/{documentId}", 1)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isNoContent())
                 .andDo(document("document-delete", pathParameters(
                                 parameterWithName("documentId").description("학습자료 id")

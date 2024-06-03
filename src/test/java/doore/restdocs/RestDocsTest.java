@@ -5,22 +5,27 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 
 import doore.attendance.api.AttendanceController;
-import doore.document.api.DocumentController;
 import doore.attendance.application.AttendanceCommandService;
+import doore.config.WebMvcConfig;
+import doore.document.api.DocumentController;
 import doore.document.application.DocumentCommandService;
 import doore.document.application.DocumentQueryService;
+import doore.garden.api.GardenController;
+import doore.garden.application.GardenQueryService;
 import doore.helper.ApiTestHelper;
 import doore.login.api.LoginController;
 import doore.login.application.LoginService;
+import doore.login.utils.JwtTokenGenerator;
+import doore.member.api.MemberController;
 import doore.member.api.MemberTeamController;
 import doore.member.application.MemberCommandService;
 import doore.member.application.MemberTeamQueryService;
+import doore.member.domain.repository.MemberRepository;
 import doore.study.api.CurriculumItemController;
 import doore.study.api.ParticipantController;
 import doore.study.api.StudyController;
-import doore.login.utils.JwtTokenGenerator;
-import doore.member.domain.repository.MemberRepository;
 import doore.study.application.CurriculumItemCommandService;
+import doore.study.application.CurriculumItemQueryService;
 import doore.study.application.ParticipantCommandService;
 import doore.study.application.ParticipantQueryService;
 import doore.study.application.StudyCommandService;
@@ -54,6 +59,8 @@ import org.springframework.web.filter.CharacterEncodingFilter;
         AttendanceController.class,
         CurriculumItemController.class,
         LoginController.class,
+        MemberController.class,
+        GardenController.class,
 })
 public abstract class RestDocsTest extends ApiTestHelper {
 
@@ -65,6 +72,9 @@ public abstract class RestDocsTest extends ApiTestHelper {
 
     @MockBean
     protected CurriculumItemCommandService curriculumItemCommandService;
+
+    @MockBean
+    protected CurriculumItemQueryService curriculumItemQueryService;
 
     @MockBean
     protected TeamCommandService teamCommandService;
@@ -93,15 +103,20 @@ public abstract class RestDocsTest extends ApiTestHelper {
     @MockBean
     protected ParticipantQueryService participantQueryService;
 
-
     @MockBean
     protected TeamQueryService teamQueryService;
+
+    @MockBean
+    protected GardenQueryService gardenQueryService;
 
     @MockBean
     protected JwtTokenGenerator jwtTokenGenerator;
 
     @MockBean
     protected MemberRepository memberRepository;
+
+    @MockBean
+    protected WebMvcConfig webMvcConfig;
 
     @Autowired
     protected RestDocumentationResultHandler restDocs;

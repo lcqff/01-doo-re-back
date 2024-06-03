@@ -3,7 +3,12 @@ package doore.document.application;
 import static doore.document.domain.DocumentGroupType.STUDY;
 import static doore.document.exception.DocumentExceptionType.LINK_DOCUMENT_NEEDS_URL;
 import static doore.document.exception.DocumentExceptionType.NO_FILE_ATTACHED;
+import static doore.garden.domain.GardenType.DOCUMENT_UPLOAD;
+import static doore.member.MemberFixture.createMember;
+import static doore.member.MemberFixture.미나;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.StudyFixture.algorithmStudy;
+import static doore.study.StudyFixture.createStudy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -23,8 +28,12 @@ import doore.document.domain.repository.FileRepository;
 import doore.document.exception.DocumentException;
 import doore.file.application.S3DocumentFileService;
 import doore.file.application.S3ImageFileService;
+import doore.garden.domain.Garden;
+import doore.garden.domain.repository.GardenRepository;
 import doore.helper.IntegrationTest;
 import doore.member.domain.Member;
+import doore.member.domain.repository.MemberRepository;
+import doore.member.exception.MemberException;
 import doore.study.domain.Study;
 import doore.study.domain.repository.StudyRepository;
 import doore.team.domain.TeamRepository;
@@ -38,43 +47,40 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 public class DocumentCommandServiceTest extends IntegrationTest {
-
     @Autowired
-    StudyRepository studyRepository;
-
+    private StudyRepository studyRepository;
     @Autowired
-    DocumentRepository documentRepository;
-
+    private DocumentRepository documentRepository;
     @Autowired
-    TeamRepository teamRepository;
-
+    private TeamRepository teamRepository;
     @Autowired
-    FileRepository fileRepository;
+    private GardenRepository gardenRepository;
+    @Autowired
+    private FileRepository fileRepository;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private S3ImageFileService s3ImageFileService;
+    @Autowired
+    private S3DocumentFileService s3DocumentFileService;
+    @Autowired
+    private DocumentCommandService documentCommandService;
 
-    @MockBean
-    S3ImageFileService s3ImageFileService;
-
-    @MockBean
-    S3DocumentFileService s3DocumentFileService;
-
-    DocumentCommandService documentCommandService;
-    DocumentCreateRequest documentRequest;
-    Study study;
+    private DocumentCreateRequest documentRequest;
+    private Study study;
+    private Member member;
 
     @BeforeEach
     void setUp() {
-        documentCommandService = new DocumentCommandService(documentRepository, teamRepository, studyRepository,
-                fileRepository, s3ImageFileService, s3DocumentFileService);
-
         documentRequest = new DocumentCreateRequest("발표 자료", "이번주 발표자료입니다.", DocumentAccessType.TEAM,
                 DocumentType.FILE, null, mock(Member.class).getId());
-        study = algorithmStudy();
-        studyRepository.save(study);
+        study = createStudy();
+        study = studyRepository.save(algorithmStudy());
+        member = memberRepository.save(미나());
     }
 
     @Nested
@@ -106,7 +112,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
 
             // when
             documentCommandService.createDocument(fileRequest, List.of(file), STUDY,
-                    study.getId());
+                    study.getId(), member.getId());
 
             // then
             List<Document> documents = documentRepository.findAll();
@@ -144,7 +150,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
 
             // when
             documentCommandService.createDocument(imageRequest, List.of(image), STUDY,
-                    study.getId());
+                    study.getId(), member.getId());
 
             //then
             List<Document> document = documentRepository.findAll();
@@ -162,7 +168,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
             DocumentCreateRequest urlRequest = new DocumentCreateRequest("강의 정리", "강의 정리본입니다.",
                     DocumentAccessType.TEAM, DocumentType.URL, urlPath, mock(Member.class).getId());
 
-            documentCommandService.createDocument(urlRequest, null, STUDY, study.getId());
+            documentCommandService.createDocument(urlRequest, null, STUDY, study.getId(), member.getId());
 
             //then
             List<Document> document = documentRepository.findAll();
@@ -207,7 +213,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
 
             // when
             documentCommandService.createDocument(imageRequest, List.of(image, image2), STUDY,
-                    study.getId());
+                    study.getId(), member.getId());
 
             // then
             List<Document> document = documentRepository.findAll();
@@ -226,7 +232,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
 
             //when&then
             assertThatThrownBy(() ->
-                    documentCommandService.createDocument(urlRequest, null, STUDY, study.getId()))
+                    documentCommandService.createDocument(urlRequest, null, STUDY, study.getId(), member.getId()))
                     .isInstanceOf(DocumentException.class)
                     .hasMessage(LINK_DOCUMENT_NEEDS_URL.errorMessage());
         }
@@ -240,12 +246,11 @@ public class DocumentCommandServiceTest extends IntegrationTest {
 
             //when&then
             assertThatThrownBy(() ->
-                    documentCommandService.createDocument(ImageRequest, null, STUDY, study.getId()))
+                    documentCommandService.createDocument(ImageRequest, null, STUDY, study.getId(), member.getId()))
                     .isInstanceOf(DocumentException.class)
                     .hasMessage(NO_FILE_ATTACHED.errorMessage());
         }
     }
-
 
     @Test
     @DisplayName("[성공] 정상적으로 학습자료를 업데이트 할 수 있다.")
@@ -256,7 +261,7 @@ public class DocumentCommandServiceTest extends IntegrationTest {
         //when
         DocumentUpdateRequest updatedRequest = new DocumentUpdateRequest("강의 학습 인증(수정)", "강의 학습 인증샷입니다. 수정",
                 DocumentAccessType.ALL);
-        documentCommandService.updateDocument(updatedRequest, document.getId());
+        documentCommandService.updateDocument(updatedRequest, document.getId(), member.getId());
 
         //then
         assertAll(
@@ -266,6 +271,20 @@ public class DocumentCommandServiceTest extends IntegrationTest {
         );
     }
 
+    @Test
+    @DisplayName("[실패] 해당 자료 업로더가 아니라면 업데이트 할 수 없다.")
+    void updateDocument_해당_자료_업로더가_아니라면_업데이트_할_수_없다_실패() {
+        Document document = new DocumentFixture().buildDocument();
+        Member notUploader = createMember();
+
+        DocumentUpdateRequest updatedRequest = new DocumentUpdateRequest("강의 학습 인증(수정)", "강의 학습 인증샷입니다. 수정",
+                DocumentAccessType.ALL);
+
+        assertThatThrownBy(() ->
+                documentCommandService.updateDocument(updatedRequest, document.getId(), notUploader.getId()))
+                .isInstanceOf(MemberException.class)
+                .hasMessage(UNAUTHORIZED.errorMessage());
+    }
 
     @Test
     @DisplayName("[성공] 학습자료를 정상적으로 삭제할 수 있다.")
@@ -274,10 +293,51 @@ public class DocumentCommandServiceTest extends IntegrationTest {
         Document document = new DocumentFixture().buildDocument();
         assertThat(documentRepository.findAll()).hasSize(1);
         //when
-        documentCommandService.deleteDocument(document.getId());
+        documentCommandService.deleteDocument(document.getId(), member.getId());
 
         //then
         List<Document> documents = documentRepository.findAll();
         assertTrue(documents.get(0).getIsDeleted());
+    }
+
+    @Test
+    @DisplayName("[실패] 해당 자료 업로더가 아니라면 삭제 할 수 없다.")
+    void deleteDocument_해당_자료_업로더가_아니라면_삭제_할_수_없다_실패() {
+        Document document = new DocumentFixture().buildDocument();
+        Member notUploader = createMember();
+
+        assertThatThrownBy(() ->
+                documentCommandService.deleteDocument(document.getId(), notUploader.getId()))
+                .isInstanceOf(MemberException.class)
+                .hasMessage(UNAUTHORIZED.errorMessage());
+    }
+
+    @Test
+    @DisplayName("[실패] 회원이 아니라면 학습자료를 등록할 수 없다.")
+    void createDocument_회원이_아니라면_학습자료를_등록할_수_없다() {
+        Long invalidMemberId = 10L;
+
+        DocumentCreateRequest fileRequest = new DocumentCreateRequest("발표 자료", "이번주 발표자료입니다.",
+                DocumentAccessType.TEAM, DocumentType.FILE, null, mock(Member.class).getId());
+
+        assertThatThrownBy(() ->
+                documentCommandService.createDocument(fileRequest, null, STUDY, study.getId(), invalidMemberId))
+                .isInstanceOf(MemberException.class)
+                .hasMessage(UNAUTHORIZED.errorMessage());
+    }
+
+    @Test
+    @DisplayName("[성공] 학습자료 업로드시 정상적으로 텃밭을 생성할 수 있다.")
+    public void createGarden_학습자료_업로드시_정상적으로_텃밭에_반영된다_성공() throws Exception {
+        //given
+        Document document = new DocumentFixture().buildDocument();
+
+        //when
+        documentCommandService.createGarden(document);
+
+        //then
+        Garden garden = gardenRepository.findAll().get(0);
+        assertEquals(garden.getContributionId(), document.getId());
+        assertEquals(garden.getType(), DOCUMENT_UPLOAD);
     }
 }
