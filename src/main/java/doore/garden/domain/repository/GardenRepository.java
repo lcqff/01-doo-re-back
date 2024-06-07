@@ -14,6 +14,6 @@ public interface GardenRepository extends JpaRepository<Garden,Long> {
     @Query("SELECT g FROM Garden g WHERE g.teamId = :teamId AND g.contributedDate = CURRENT_DATE")
     List<Garden> findTodayGardenByTeamId(Long teamId); //오늘의 데이터만 가져온다.
 
-    @Query("SELECT g FROM Garden g WHERE g.teamId = :teamId AND WEEK(g.contributedDate, 1) = WEEK(CURRENT_DATE, 1) ORDER BY g.contributedDate ASC")
+    @Query("SELECT g FROM Garden g WHERE g.teamId = :teamId AND YEARWEEK(g.contributedDate, 1) = YEARWEEK(CURRENT_DATE, 1) ORDER BY g.contributedDate ASC")
     List<Garden> findThisWeekGardenByTeamId(Long teamId); //이번주의 데이터만 가져온다.(월~일)
 }
