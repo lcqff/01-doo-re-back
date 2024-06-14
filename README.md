@@ -97,11 +97,10 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
     </td>
   </tr>
 </table>
+</div>
 
-<h3 align="left">
-2024.3.1 ~ 진행중
-</h3>
 
+### 2024.3.1 ~ 진행중
 <div align="center">
   <table>
   <tr>
@@ -153,8 +152,7 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
        BackEnd
     </td>
   </tr>
-</table>
-
+  </table>
 </div>
 
 ## :pencil2: 기술 스택
