@@ -45,8 +45,8 @@ public class StudyQueryService {
     private final CropRepository cropRepository;
     private final MemberRepository memberRepository;
 
-    public StudyResponse findStudyById(Long studyId) {
-        Study study = studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
+    public StudyResponse findStudyById(final Long studyId) {
+        final Study study = studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
 
         final Team team = teamRepository.findById(study.getTeamId())
                 .orElseThrow(() -> new TeamException(NOT_FOUND_TEAM));
@@ -60,11 +60,11 @@ public class StudyQueryService {
     public List<StudyResponse> findMyStudies(final Long memberId, final Long tokenMemberId) {
         checkSameMemberIdAndTokenMemberId(memberId, tokenMemberId);
 
-        List<Participant> participants = participantRepository.findByMemberId(memberId);
-        List<Long> studyIds = participants.stream()
+        final List<Participant> participants = participantRepository.findByMemberId(memberId);
+        final List<Long> studyIds = participants.stream()
                 .map(Participant::getStudyId)
                 .toList();
-        List<Study> studies = studyRepository.findAllById(studyIds);
+        final List<Study> studies = studyRepository.findAllById(studyIds);
 
         return studies.stream()
                 .map(study -> StudyResponse.of(study,
@@ -81,22 +81,24 @@ public class StudyQueryService {
         }
     }
 
-    private void validateExistStudyLeaderAndParticipant(Long memberId) {
-        StudyRole studyRole = studyRoleRepository.findById(memberId)
+    private void validateExistStudyLeaderAndParticipant(final Long memberId) {
+        final StudyRole studyRole = studyRoleRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_STUDY));
         if (!(studyRole.getStudyRoleType().equals(ROLE_스터디장) || studyRole.getStudyRoleType().equals(ROLE_스터디원))) {
             throw new MemberException(UNAUTHORIZED);
         }
     }
 
-    private void validateExistMember(Long memberId) {
+    private void validateExistMember(final Long memberId) {
         memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
     }
 
     private long checkStudyProgressRatio(Long studyId) {
-        List<Long> curriculumItemIds = curriculumItemRepository.findIdsByStudyId(studyId);
-        long totalCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdIn(curriculumItemIds);
-        long checkedTrueCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdInAndIsCheckedTrue(curriculumItemIds);
+        final List<Long> curriculumItemIds = curriculumItemRepository.findIdsByStudyId(studyId);
+        final long totalCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdIn(
+                curriculumItemIds);
+        final long checkedTrueCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdInAndIsCheckedTrue(
+                curriculumItemIds);
         return totalCurriculumItems > 0 ? (checkedTrueCurriculumItems * 100) / totalCurriculumItems : 0;
     }
 }
