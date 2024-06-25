@@ -23,10 +23,8 @@ import doore.team.domain.Team;
 import doore.team.domain.TeamRepository;
 import doore.team.exception.TeamException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,22 +96,23 @@ public class TeamQueryService {
     }
 
     public List<TeamRankResponse> getTeamRanks() {
-        final Map<Integer, TeamReferenceResponse> teamRanks = calculateTeamRanks();
-        return teamRanks.entrySet().stream()
-                .map(entry -> new TeamRankResponse(entry.getKey(), entry.getValue()))
+        final List<Team> teams = teamRepository.findAll();
+        List<TeamRankResponse> teamRanks = teams.stream().map(this::convertTeamToTeamRankResponse).toList();
+        return teamRanks.stream()
+                .sorted(Comparator.comparingInt(TeamRankResponse::point).reversed())
                 .toList();
     }
 
-    private Map<Integer, TeamReferenceResponse> calculateTeamRanks() {
-        final List<Team> teams = teamRepository.findAll();
-        final Map<Integer, TeamReferenceResponse> teamRanks = new TreeMap<>(Collections.reverseOrder());
-        for (final Team team : teams) {
-            final List<DayGardenResponse> gardenResponses = gardenQueryService.getThisWeekGarden(team.getId());
-            final Integer point = gardenResponses.stream()
-                    .mapToInt(DayGardenResponse::contributeCount)
-                    .sum();
-            teamRanks.put(point, TeamReferenceResponse.from(team));
-        }
-        return teamRanks;
+    private TeamRankResponse convertTeamToTeamRankResponse(final Team team) {
+        final int point = calculatePoint(team);
+        final List<DayGardenResponse> yearGardenResponses = gardenQueryService.getAllGarden(team.getId());
+        return new TeamRankResponse(point, TeamReferenceResponse.from(team), yearGardenResponses);
+    }
+
+    private int calculatePoint(final Team team) {
+        final List<DayGardenResponse> weekGardenResponses = gardenQueryService.getThisWeekGarden(team.getId());
+        return weekGardenResponses.stream()
+                .mapToInt(DayGardenResponse::contributeCount)
+                .sum();
     }
 }
