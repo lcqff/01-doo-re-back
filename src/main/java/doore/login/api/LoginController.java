@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
     private final LoginService loginService;
 
-    @PostMapping("/google")
+    @GetMapping("/google")
     public ResponseEntity<LoginResponse> loginByGoogle(@Valid @RequestBody final GoogleLoginRequest request) {
         return ResponseEntity.ok(loginService.loginByGoogle(request));
     }
