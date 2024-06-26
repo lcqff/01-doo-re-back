@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 
 public class MemberApiDocsTest extends RestDocsTest {
@@ -61,4 +62,19 @@ public class MemberApiDocsTest extends RestDocsTest {
                 .andDo(document("delete-member"));
     }
 
+    //todo: docs code
+
+    @Test
+    @DisplayName("[성공] 프로필 이름 수정에 성공한다.")
+    void updateMyPageName_프로필_이름_수정에_성공한다() throws Exception {
+        String requestJson = "{\"newName\":\"요시\"}";
+        doNothing().when(memberCommandService).updateMyPageName(any(), any());
+
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/profile/name")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+                        .header(HttpHeaders.AUTHORIZATION, accessToken))
+                .andExpect(status().isNoContent())
+                .andDo(document("update-my-page-name"));
+    }
 }

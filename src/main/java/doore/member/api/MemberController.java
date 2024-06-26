@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -38,4 +39,9 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/profile/name")
+    public ResponseEntity<Void> updateMyPageName(@RequestBody String newName, @LoginMember Member member) {
+        memberCommandService.updateMyPageName(member.getId(), newName);
+        return ResponseEntity.noContent().build();
+    }
 }

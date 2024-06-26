@@ -100,4 +100,16 @@ public class MemberCommandService {
     private Study validateExistStudy(Long studyId) {
         return studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
     }
+
+    public void updateMyPageName(Long memberId, String newName) {
+        Member member = validateExistMember(memberId);
+        Member updatedMember = Member.builder()
+                .id(memberId)
+                .name(newName)
+                .googleId(member.getGoogleId())
+                .email(member.getEmail())
+                .imageUrl(member.getImageUrl())
+                .build();
+        memberRepository.save(updatedMember);
+    }
 }

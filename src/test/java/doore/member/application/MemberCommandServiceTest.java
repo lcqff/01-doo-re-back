@@ -227,4 +227,14 @@ class MemberCommandServiceTest extends IntegrationTest {
             memberCommandService.transferStudyLeader(study.getId(), member.getId(), notStudyLeaderMember.getId());
         });
     }
+
+    @Test
+    @DisplayName("[성공] 프로필 이름 수정에 성공한다.")
+    void updateMyPageName_프로필_이름_수정에_성공한다_성공() {
+        String updateName = "요시";
+        memberCommandService.updateMyPageName(member.getId(), updateName);
+
+        Member findMember = memberRepository.findById(member.getId()).get();
+        assertThat(findMember.getName()).isEqualTo(updateName);
+    }
 }
