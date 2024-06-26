@@ -3,7 +3,7 @@ package doore.restdocs.docs;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,7 +38,7 @@ public class LoginApiDocsTest extends RestDocsTest {
                 stringFieldWithPath("token", "Access Token")
         );
 
-        mockMvc.perform(post("/login/google")
+        mockMvc.perform(get("/login/google")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(request))).andExpect(status().isOk())
                 .andDo(document("login-google", requestFields, responseFields));
