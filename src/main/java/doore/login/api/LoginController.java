@@ -1,11 +1,13 @@
 package doore.login.api;
 
 import doore.login.application.LoginService;
+import doore.login.application.dto.request.GoogleLoginRequest;
 import doore.login.application.dto.response.LoginResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
     private final LoginService loginService;
 
-    @GetMapping("/google")
-    public ResponseEntity<LoginResponse> loginByGoogle(@RequestParam("code") final String code) {
-        return ResponseEntity.ok(loginService.loginByGoogle(code));
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> loginByGoogle(@Valid @RequestBody final GoogleLoginRequest request) {
+        return ResponseEntity.ok(loginService.loginByGoogle(request));
     }
 }

@@ -3,11 +3,9 @@ package doore.restdocs.docs;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import doore.login.application.dto.request.GoogleLoginRequest;
@@ -18,9 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.RequestFieldsSnippet;
 import org.springframework.restdocs.payload.ResponseFieldsSnippet;
-import org.springframework.restdocs.request.QueryParametersSnippet;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 public class LoginApiDocsTest extends RestDocsTest {
 
@@ -30,12 +25,12 @@ public class LoginApiDocsTest extends RestDocsTest {
         //given
         final GoogleLoginRequest request = new GoogleLoginRequest("Authorization_Code");
         final LoginResponse response = new LoginResponse(3L, "doore.access.token");
-        when(loginService.loginByGoogle(any()))
+        when(loginService.loginByGoogle(any(GoogleLoginRequest.class)))
                 .thenReturn(response);
 
         //when & then
-        final QueryParametersSnippet quereyParameters = queryParameters(
-                parameterWithName("code").description("구글에서 발급받은 인가 코드")
+        final RequestFieldsSnippet requestFields = requestFields(
+                stringFieldWithPath("code", "구글에서 발급받은 인가 코드")
         );
 
         final ResponseFieldsSnippet responseFields = responseFields(
@@ -43,11 +38,9 @@ public class LoginApiDocsTest extends RestDocsTest {
                 stringFieldWithPath("token", "Access Token")
         );
 
-        final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("code", "google authorization code");
-        mockMvc.perform(get("/login/google")
-                .contentType(MediaType.APPLICATION_JSON).params(params)
-                .content(asJsonString(request))).andExpect(status().isOk())
-                .andDo(document("login-google", quereyParameters, responseFields));
+        mockMvc.perform(post("/login/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(request))).andExpect(status().isOk())
+                .andDo(document("login-google", requestFields, responseFields));
     }
 }
