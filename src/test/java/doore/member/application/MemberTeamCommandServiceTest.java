@@ -107,6 +107,6 @@ public class MemberTeamCommandServiceTest extends IntegrationTest {
         //when & then
         assertThatThrownBy(() -> {
             memberTeamCommandService.deleteMemberTeam(team.getId(), otherTeamMember.getId(), teamLeader.getId());
-        }).isInstanceOf(MemberException.class).hasMessage(UNAUTHORIZED.errorMessage());
+        }).isInstanceOf(MemberException.class).hasMessage(NOT_FOUND_MEMBER_ROLE_IN_TEAM.errorMessage());
     }
 }
