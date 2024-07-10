@@ -13,7 +13,6 @@ import doore.document.application.dto.response.DocumentDetailResponse;
 import doore.document.application.dto.response.FileResponse;
 import doore.document.domain.Document;
 import doore.document.domain.DocumentGroupType;
-import doore.document.domain.File;
 import doore.document.domain.repository.DocumentRepository;
 import doore.document.exception.DocumentException;
 import doore.member.domain.StudyRole;
@@ -22,7 +21,6 @@ import doore.member.domain.repository.StudyRoleRepository;
 import doore.member.exception.MemberException;
 import doore.study.domain.Study;
 import doore.study.domain.repository.StudyRepository;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -47,10 +45,11 @@ public class DocumentQueryService {
     }
 
     private DocumentCondensedResponse toDocumentCondensedResponse(final Document document) {
-        final Long uploaderId = memberRepository.findById(document.getUploaderId())
-                .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER)).getId();
-        return new DocumentCondensedResponse(document.getId(), document.getName(), document.getDescription(),
-                document.getCreatedAt().toLocalDate(), uploaderId);
+        final String uploaderName = memberRepository.findById(document.getUploaderId())
+                .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER))
+                .getName();
+
+        return DocumentCondensedResponse.of(document, uploaderName);
     }
 
     public DocumentDetailResponse getDocument(final Long documentId, final Long memberId) {
@@ -65,27 +64,17 @@ public class DocumentQueryService {
     }
 
     private DocumentDetailResponse toDocumentDetailResponse(final Document document) {
-        final List<FileResponse> fileResponses = new ArrayList<>();
-        for (final File file : document.getFiles()) {
-            final FileResponse fileResponse = new FileResponse(file.getId(), file.getUrl());
-            fileResponses.add(fileResponse);
-        }
-        final String uploaderName = memberRepository.findById(document.getId())
+        final List<FileResponse> fileResponses = document.getFiles().stream()
+                .map(file -> new FileResponse(file.getId(), file.getUrl()))
+                .toList();
+
+        final String uploaderName = memberRepository.findById(document.getUploaderId())
                 .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER))
                 .getName();
 
-        return DocumentDetailResponse
-                .builder()
-                .id(document.getId())
-                .title(document.getName())
-                .description(document.getDescription())
-                .accessType(document.getAccessType())
-                .type(document.getType())
-                .files(fileResponses)
-                .date(document.getCreatedAt().toLocalDate())
-                .uploader(uploaderName)
-                .build();
+        return DocumentDetailResponse.of(document, fileResponses, uploaderName);
     }
+
 
     private void validateExistMember(final Long memberId) {
         memberRepository.findById(memberId).orElseThrow(() -> new MemberException(UNAUTHORIZED));
