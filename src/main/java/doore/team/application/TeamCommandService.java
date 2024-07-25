@@ -4,18 +4,19 @@ import static doore.member.domain.TeamRoleType.ROLE_팀원;
 import static doore.member.domain.TeamRoleType.ROLE_팀장;
 import static doore.member.exception.MemberExceptionType.ALREADY_JOIN_TEAM_MEMBER;
 import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER;
-import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_IN_TEAM;
-import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.team.exception.TeamExceptionType.EXPIRED_LINK;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 import static doore.team.exception.TeamExceptionType.NOT_MATCH_LINK;
 
 import doore.file.application.S3ImageFileService;
+import doore.member.application.convenience.TeamRoleValidateAccessPermission;
 import doore.member.domain.Member;
 import doore.member.domain.MemberTeam;
+import doore.member.domain.Participant;
 import doore.member.domain.TeamRole;
 import doore.member.domain.repository.MemberRepository;
 import doore.member.domain.repository.MemberTeamRepository;
+import doore.member.domain.repository.ParticipantRepository;
 import doore.member.domain.repository.TeamRoleRepository;
 import doore.member.exception.MemberException;
 import doore.study.domain.CurriculumItem;
@@ -52,8 +53,10 @@ public class TeamCommandService {
     private final CurriculumItemRepository curriculumItemRepository;
     private final ParticipantCurriculumItemRepository participantCurriculumItemRepository;
     private final MemberTeamRepository memberTeamRepository;
+    private final ParticipantRepository participantRepository;
     private final S3ImageFileService s3ImageFileService;
     private final RedisUtil redisUtil;
+    private final TeamRoleValidateAccessPermission teamRoleValidateAccessPermission;
 
     private static final String INVITE_LINK_PREFIX = "teamId=%d";
 
@@ -69,31 +72,21 @@ public class TeamCommandService {
                     .build();
             teamRepository.save(team);
 
-            final TeamRole teamRole = TeamRole.builder()
-                    .memberId(memberId)
-                    .teamId(team.getId())
-                    .teamRoleType(ROLE_팀장)
-                    .build();
-            teamRoleRepository.save(teamRole);
-            final MemberTeam memberTeam = MemberTeam.builder()
-                    .member(member)
-                    .isDeleted(false)
-                    .teamId(team.getId())
-                    .build();
-            memberTeamRepository.save(memberTeam);
+            createMemberTeam(member, team.getId());
+            assignTeamLeaderRole(team.getId(), memberId);
         } catch (final Exception e) {
             s3ImageFileService.deleteFile(imageUrl);
         }
     }
 
     public void updateTeam(final Long teamId, final TeamUpdateRequest request, final Long memberId) {
-        validateExistTeamLeader(teamId, memberId);
+        teamRoleValidateAccessPermission.validateExistTeamLeader(teamId, memberId);
         final Team team = validateExistTeam(teamId);
         team.update(request.name(), request.description());
     }
 
     public void updateTeamImage(final Long teamId, final MultipartFile file, final Long memberId) {
-        validateExistTeamLeader(teamId, memberId);
+        teamRoleValidateAccessPermission.validateExistTeamLeader(teamId, memberId);
         final Team team = validateExistTeam(teamId);
 
         if (team.hasImage()) {
@@ -105,12 +98,13 @@ public class TeamCommandService {
     }
 
     public void deleteTeam(final Long teamId, final Long memberId) {
-        validateExistTeamLeader(teamId, memberId);
+        teamRoleValidateAccessPermission.validateExistTeamLeader(teamId, memberId);
         final Team team = validateExistTeam(teamId);
         teamRepository.delete(team);
         if (team.hasImage()) {
             s3ImageFileService.deleteFile(team.getImageUrl());
         }
+        deleteMemberTeamAndParticipant(teamId);
         deleteStudyAndCurriculumItemAndParticipantCurriculumItem(teamId);
     }
 
@@ -141,19 +135,8 @@ public class TeamCommandService {
             validateMatchLink(link.get(), request.code());
             // TODO: 2/14/24 권한 관련 작업이 추가되면 팀원으로 회원 추가, 이미 가입된 팀원이라면 예외 처리. (2024/7/3 완료)
             duplicateCheckTeamMember(teamId, memberId);
-            final TeamRole teamRole = TeamRole.builder()
-                    .teamId(teamId)
-                    .teamRoleType(ROLE_팀원)
-                    .memberId(memberId)
-                    .build();
-            teamRoleRepository.save(teamRole);
-            final MemberTeam memberTeam = MemberTeam.builder()
-                    .member(member)
-                    .isDeleted(false)
-                    .teamId(teamId)
-                    .build();
-            memberTeamRepository.save(memberTeam);
-            return;
+            assignTeamMemberRole(teamId, memberId);
+            createMemberTeam(member, teamId);
         }
         throw new TeamException(EXPIRED_LINK);
     }
@@ -168,18 +151,45 @@ public class TeamCommandService {
         return memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
     }
 
-    private void validateExistTeamLeader(final Long teamId, final Long memberId) {
-        final TeamRole teamRole = teamRoleRepository.findTeamRoleByTeamIdAndMemberId(teamId, memberId)
-                .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_TEAM));
-        if (!teamRole.getTeamRoleType().equals(ROLE_팀장)) {
-            throw new MemberException(UNAUTHORIZED);
-        }
-    }
-
     private void duplicateCheckTeamMember(final Long teamId, final Long memberId) {
         if (memberTeamRepository.existsByTeamIdAndMemberId(teamId, memberId)) {
             throw new MemberException(ALREADY_JOIN_TEAM_MEMBER);
-        };
+        }
+    }
+
+    private void assignTeamLeaderRole(final Long teamId, final Long memberId) {
+        teamRoleRepository.save(TeamRole.builder()
+                .teamId(teamId)
+                .teamRoleType(ROLE_팀장)
+                .memberId(memberId)
+                .build());
+    }
+
+    private void assignTeamMemberRole(final Long teamId, final Long memberId) {
+        teamRoleRepository.save(TeamRole.builder()
+                .teamId(teamId)
+                .teamRoleType(ROLE_팀원)
+                .memberId(memberId)
+                .build());
+    }
+
+    private void createMemberTeam(final Member member, final Long teamId) {
+        memberTeamRepository.save(MemberTeam.builder()
+                .member(member)
+                .isDeleted(false)
+                .teamId(teamId)
+                .build());
+    }
+
+    private void deleteMemberTeamAndParticipant(final Long teamId) {
+        final List<MemberTeam> memberTeams = memberTeamRepository.findAllByTeamId(teamId);
+        memberTeamRepository.deleteAll(memberTeams);
+
+        final List<Study> studies = studyRepository.findAllByTeamId(teamId);
+        studies.forEach(study -> {
+            final List<Participant> participants = participantRepository.findAllByStudyId(study.getId());
+            participantRepository.deleteAll(participants);
+        });
     }
 
     private void deleteStudyAndCurriculumItemAndParticipantCurriculumItem(final Long teamId) {
@@ -190,10 +200,10 @@ public class TeamCommandService {
             final List<CurriculumItem> curriculumItems = curriculumItemRepository.findAllByStudyId(study.getId());
 
             curriculumItems.forEach(curriculumItem -> {
-                curriculumItem.delete();
+                curriculumItem.delete(); // todo: 수료증 개발 시 확인 필
                 final List<ParticipantCurriculumItem> participantCurriculumItems = participantCurriculumItemRepository.findAllByCurriculumItemId(
                         curriculumItem.getId());
-                participantCurriculumItems.forEach(ParticipantCurriculumItem::delete);
+                participantCurriculumItems.forEach(ParticipantCurriculumItem::delete); // todo: 수료증 개발 시 delete 로직 확인 필요
             });
         });
     }

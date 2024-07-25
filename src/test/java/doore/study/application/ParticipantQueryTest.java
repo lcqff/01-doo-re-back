@@ -2,7 +2,7 @@ package doore.study.application;
 
 import static doore.member.MemberFixture.보름;
 import static doore.member.MemberFixture.아마란스;
-import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_IN_STUDY;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.StudyFixture.algorithmStudy;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -11,12 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import doore.helper.IntegrationTest;
 import doore.member.domain.Member;
-import doore.member.domain.Participant;
 import doore.member.domain.StudyRole;
 import doore.member.domain.StudyRoleType;
 import doore.member.domain.repository.MemberRepository;
 import doore.member.domain.repository.StudyRoleRepository;
 import doore.member.exception.MemberException;
+import doore.study.application.dto.response.ParticipantResponse;
 import doore.study.domain.Study;
 import doore.study.domain.repository.StudyRepository;
 import java.util.List;
@@ -64,13 +64,13 @@ public class ParticipantQueryTest extends IntegrationTest {
             participantCommandService.saveParticipant(study.getId(), member.getId(), member.getId());
 
             //when
-            final List<Participant> participants = participantQueryService.findAllParticipants(study.getId(),
+            final List<ParticipantResponse> participantResponses = participantQueryService.findAllParticipants(study.getId(),
                     member.getId());
 
             //then
             assertAll(
-                    () -> assertThat(participants).hasSize(1),
-                    () -> assertEquals(member.getId(), participants.get(0).getMember().getId())
+                    () -> assertThat(participantResponses).hasSize(1),
+                    () -> assertEquals(member.getId(), participantResponses.get(0).memberId())
             );
         }
 
@@ -81,7 +81,7 @@ public class ParticipantQueryTest extends IntegrationTest {
 
             assertThatThrownBy(() -> participantQueryService.findAllParticipants(study.getId(), member.getId()))
                     .isInstanceOf(MemberException.class)
-                    .hasMessage(NOT_FOUND_MEMBER_ROLE_IN_STUDY.errorMessage());
+                    .hasMessage(UNAUTHORIZED.errorMessage());
         }
     }
 }
