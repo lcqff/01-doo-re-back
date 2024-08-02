@@ -11,6 +11,7 @@ import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 
 import doore.login.application.dto.response.GoogleAccountProfileResponse;
+import doore.member.application.dto.request.MemberUpdateRequest;
 import doore.member.domain.Member;
 import doore.member.domain.StudyRole;
 import doore.member.domain.TeamRole;
@@ -101,11 +102,15 @@ public class MemberCommandService {
         return studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
     }
 
-    public void updateMyPageName(Long memberId, String newName) {
-        Member member = validateExistMember(memberId);
+    public void updateMyPage(Long tokenMemberId, Long pathMemberId, MemberUpdateRequest memberUpdateRequest) {
+        if (!tokenMemberId.equals(pathMemberId)) {
+            throw new MemberException(UNAUTHORIZED);
+        }
+
+        Member member = validateExistMember(pathMemberId);
         Member updatedMember = Member.builder()
-                .id(memberId)
-                .name(newName)
+                .id(pathMemberId)
+                .name(memberUpdateRequest.getNewName())
                 .googleId(member.getGoogleId())
                 .email(member.getEmail())
                 .imageUrl(member.getImageUrl())

@@ -8,6 +8,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import doore.member.application.dto.request.MemberUpdateRequest;
 import doore.restdocs.RestDocsTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -62,19 +63,20 @@ public class MemberApiDocsTest extends RestDocsTest {
                 .andDo(document("delete-member"));
     }
 
-    //todo: docs code
-
     @Test
     @DisplayName("[성공] 프로필 이름 수정에 성공한다.")
     void updateMyPageName_프로필_이름_수정에_성공한다() throws Exception {
         String requestJson = "{\"newName\":\"요시\"}";
-        doNothing().when(memberCommandService).updateMyPageName(any(), any());
+        doNothing().when(memberCommandService)
+                .updateMyPage(any(Long.class), any(Long.class), any(MemberUpdateRequest.class));
 
-        mockMvc.perform(RestDocumentationRequestBuilders.patch("/profile/name")
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/profile/members/{memberId}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson)
                         .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isNoContent())
-                .andDo(document("update-my-page-name"));
+                .andDo(document("update-my-page-name", pathParameters(
+                        parameterWithName("memberId").description("회원 id")
+                )));
     }
 }

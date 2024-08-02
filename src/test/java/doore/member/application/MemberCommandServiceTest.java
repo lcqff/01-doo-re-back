@@ -7,6 +7,7 @@ import static doore.member.domain.StudyRoleType.ROLE_스터디장;
 import static doore.member.domain.TeamRoleType.ROLE_팀원;
 import static doore.member.domain.TeamRoleType.ROLE_팀장;
 import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER;
+import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 import doore.helper.IntegrationTest;
 import doore.login.application.dto.response.GoogleAccountProfileResponse;
+import doore.member.application.dto.request.MemberUpdateRequest;
 import doore.member.domain.Member;
 import doore.member.domain.StudyRole;
 import doore.member.domain.TeamRole;
@@ -231,10 +233,36 @@ class MemberCommandServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[성공] 프로필 이름 수정에 성공한다.")
     void updateMyPageName_프로필_이름_수정에_성공한다_성공() {
-        String updateName = "요시";
-        memberCommandService.updateMyPageName(member.getId(), updateName);
+        MemberUpdateRequest request = new MemberUpdateRequest();
+        request.setNewName("요시");
 
-        Member findMember = memberRepository.findById(member.getId()).get();
-        assertThat(findMember.getName()).isEqualTo(updateName);
+        memberCommandService.updateMyPage(member.getId(), member.getId(), request);
+
+        Member findMember = memberRepository.findById(member.getId()).orElseThrow();
+        assertThat(findMember.getName()).isEqualTo("요시");
+    }
+
+    @Test
+    @DisplayName("[실패] 프로필 이름 수정 시 유효하지 않은 회원이면 실패한다.")
+    void updateMyPageName_유효하지_않은_회원이_프로필_이름_수정을_시도하면_실패한다() {
+        Long invalidMemberId = 10L;
+
+        MemberUpdateRequest request = new MemberUpdateRequest();
+        request.setNewName("요시");
+
+        assertThatThrownBy(() -> {
+            memberCommandService.updateMyPage(member.getId(), invalidMemberId, request);
+        }).isInstanceOf(MemberException.class).hasMessage(NOT_FOUND_MEMBER.errorMessage());
+    }
+
+    @Test
+    @DisplayName("[실패] 프로필 이름 수정 시 권한이 없으면 실패한다.")
+    void updateMyPageName_권한이_없는_회원이_프로필_이름_수정을_시도하면_실패한다() {
+        MemberUpdateRequest request = new MemberUpdateRequest();
+        request.setNewName("요시");
+
+        assertThatThrownBy(() -> {
+            memberCommandService.updateMyPage(2L, member.getId(), request);
+        }).isInstanceOf(MemberException.class).hasMessage(UNAUTHORIZED.errorMessage());
     }
 }

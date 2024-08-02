@@ -1,6 +1,7 @@
 package doore.member.api;
 
 import doore.member.application.MemberCommandService;
+import doore.member.application.dto.request.MemberUpdateRequest;
 import doore.member.domain.Member;
 import doore.resolver.LoginMember;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,11 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/profile/name")
-    public ResponseEntity<Void> updateMyPageName(@RequestBody String newName, @LoginMember Member member) {
-        memberCommandService.updateMyPageName(member.getId(), newName);
+    @PatchMapping("/profile/members/{memberId}")
+    public ResponseEntity<Void> updateMyPage(@PathVariable Long memberId,
+                                             @RequestBody MemberUpdateRequest memberUpdateRequest,
+                                             @LoginMember Member member) {
+        memberCommandService.updateMyPage(member.getId(), memberId, memberUpdateRequest);
         return ResponseEntity.noContent().build();
     }
 }
