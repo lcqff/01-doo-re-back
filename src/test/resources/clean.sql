@@ -3,7 +3,6 @@ truncate table team;
 truncate table study;
 truncate table curriculum_item;
 truncate table participant_curriculum_item;
-truncate table crop;
 truncate table member_team;
 truncate table participant;
 truncate table garden;

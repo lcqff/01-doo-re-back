@@ -9,26 +9,27 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.restdocs.request.RequestDocumentation.queryParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 
-import doore.crop.response.CropReferenceResponse;
 import doore.restdocs.RestDocsTest;
 import doore.study.application.dto.request.StudyCreateRequest;
 import doore.study.application.dto.request.StudyUpdateRequest;
-import doore.study.application.dto.response.CurriculumItemReferenceResponse;
+import doore.study.application.dto.response.StudyRankResponse;
+import doore.study.application.dto.response.StudyReferenceResponse;
 import doore.study.application.dto.response.StudyResponse;
-import doore.study.application.dto.response.StudySimpleResponse;
 import doore.study.domain.StudyStatus;
 import doore.team.application.dto.response.TeamReferenceResponse;
 import java.time.LocalDate;
 import java.util.List;
-import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.ResponseFieldsSnippet;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 public class StudyApiDocsTest extends RestDocsTest {
     private String accessToken;
@@ -42,7 +43,7 @@ public class StudyApiDocsTest extends RestDocsTest {
     @Test
     @DisplayName("스터디를 생성한다.")
     public void 스터디를_생성한다() throws Exception {
-        StudyCreateRequest request = StudyCreateRequest.builder()
+        final StudyCreateRequest request = StudyCreateRequest.builder()
                 .name("알고리즘")
                 .description("알고리즘 스터디 입니다.")
                 .startDate(LocalDate.parse("2023-01-01"))
@@ -71,9 +72,9 @@ public class StudyApiDocsTest extends RestDocsTest {
     @Test
     @DisplayName("스터디 정보를 조회한다.")
     public void 스터디_정보를_조회한다() throws Exception {
-        StudyResponse studyResponse = getStudyResponse();
+        final StudyResponse studyResponse = getStudyResponse();
 
-        when(studyQueryService.findStudyById(any(), any())).thenReturn(studyResponse);
+        when(studyQueryService.findStudyById(any())).thenReturn(studyResponse);
 
         mockMvc.perform(RestDocumentationRequestBuilders.get("/studies/{studyId}", 1))
                 .andExpect(status().isOk())
@@ -84,9 +85,8 @@ public class StudyApiDocsTest extends RestDocsTest {
     }
 
     private StudyResponse getStudyResponse() {
-        TeamReferenceResponse teamReferenceResponse =
+        final TeamReferenceResponse teamReferenceResponse =
                 new TeamReferenceResponse(1L, "개발 동아리 BDD", "개발 동아리 BDD입니다!", "https://~");
-        CropReferenceResponse cropReferenceResponse = new CropReferenceResponse(1L, "벼", "https://~");
 
         return StudyResponse.builder()
                 .id(1L)
@@ -96,7 +96,21 @@ public class StudyApiDocsTest extends RestDocsTest {
                 .endDate(LocalDate.parse("2020-01-02"))
                 .status(StudyStatus.IN_PROGRESS)
                 .teamReference(teamReferenceResponse)
-                .cropReference(cropReferenceResponse)
+                .studyProgressRatio(50)
+                .studyLeaderId(1L)
+                .build();
+    }
+
+    private StudyReferenceResponse getStudyReferenceResponse() {
+        return StudyReferenceResponse.builder()
+                .id(1L)
+                .name("알고리즘")
+                .description("알고리즘 스터디입니다.")
+                .startDate(LocalDate.parse("2020-01-01"))
+                .endDate(LocalDate.parse("2020-01-02"))
+                .status(StudyStatus.IN_PROGRESS)
+                .cropId(1L)
+                .studyProgressRatio(50)
                 .build();
     }
 
@@ -114,7 +128,7 @@ public class StudyApiDocsTest extends RestDocsTest {
     @Test
     @DisplayName("스터디를 수정한다.")
     public void 스터디를_수정한다() throws Exception {
-        StudyUpdateRequest request = StudyUpdateRequest.builder()
+        final StudyUpdateRequest request = StudyUpdateRequest.builder()
                 .name("스프링")
                 .description("스프링 스터디 입니다.")
                 .startDate(LocalDate.parse("2023-01-01"))
@@ -169,13 +183,13 @@ public class StudyApiDocsTest extends RestDocsTest {
     }
 
     @Test
-    @Disabled //todo: 모든 권한관련 코드 처리 후 확인할 예정
     @DisplayName("나의 스터디 목록을 조회한다.")
     public void 나의_스터디_목록을_조회한다() throws Exception {
         final Long memberId = 1L;
-        final Long tokenMemberId = 1L;
-        final String FAKE_BEARER_ACCESS_TOKEN = "Bearer AccessToken";
-        final StudySimpleResponse response = getStudySimpleResponse();
+        final List<StudyReferenceResponse> response = List.of(
+                getStudyReferenceResponse(),
+                getStudyReferenceResponse()
+        );
 
         final ResponseFieldsSnippet responseFieldsSnippet = responseFields(
                 numberFieldWithPath("[].id", "스터디의 ID"),
@@ -184,43 +198,50 @@ public class StudyApiDocsTest extends RestDocsTest {
                 stringFieldWithPath("[].startDate", "스터디의 시작일"),
                 stringFieldWithPath("[].endDate", "스터디의 종료일"),
                 stringFieldWithPath("[].status", "스터디의 진행 상태"),
-                booleanFieldWithPath("[].isDeleted", "스터디의 삭제 여부"),
-                numberFieldWithPath("[].teamReference.id", "스터디가 속한 팀의 ID"),
-                stringFieldWithPath("[].teamReference.name", "스터디가 속한 팀의 이름"),
-                stringFieldWithPath("[].teamReference.description", "스터디가 속한 팀의 설명"),
-                stringFieldWithPath("[].teamReference.imageUrl", "스터디가 속한 팀의 이미지 url"),
-                numberFieldWithPath("[].cropReference.id", "스터디의 작물의 ID"),
-                stringFieldWithPath("[].cropReference.name", "스터디의 작물의 이름"),
-                stringFieldWithPath("[].cropReference.imageUrl", "스터디의 작물의 이미지 url"),
-                numberFieldWithPath("[].curriculumItems[].id", "스터디의 커리큘럼 ID"),
-                stringFieldWithPath("[].curriculumItems[].name", "스터디의 커리큘럼 이름"),
-                numberFieldWithPath("[].curriculumItems[].itemOrder", "스터디의 커리큘럼 순서번호"),
-                booleanFieldWithPath("[].curriculumItems[].isDeleted", "스터디의 커리큘럼 삭제여부")
+                numberFieldWithPath("[].cropId", "스터디의 작물 ID"),
+                numberFieldWithPath("[].studyProgressRatio", "스터디 진행률")
         );
 
-        when(studyQueryService.findMyStudies(memberId, tokenMemberId)).thenReturn(List.of(response));
+        when(studyQueryService.findMyStudies(any(), any())).thenReturn(response);
 
         mockMvc.perform(RestDocumentationRequestBuilders.get("/studies/members/{memberId}", memberId)
-                        .header(HttpHeaders.AUTHORIZATION, FAKE_BEARER_ACCESS_TOKEN))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andDo(document("my-studies",
                         pathParameters(
                                 parameterWithName("memberId").description("회원 id")
                         ),
-                        responseFieldsSnippet
-                ));
+                        responseFieldsSnippet));
     }
 
-    private static StudySimpleResponse getStudySimpleResponse() {
-        final TeamReferenceResponse teamReferenceResponse =
-                new TeamReferenceResponse(1L, "개발 동아리 BDD", "개발 동아리 BDD입니다!", "https://~");
-        final CropReferenceResponse cropReferenceResponse = new CropReferenceResponse(1L, "벼", "https://~");
-        final CurriculumItemReferenceResponse curriculumItemReferenceResponse = new CurriculumItemReferenceResponse(
-                1L, "chapter1. greedy", 1, false);
-        final StudySimpleResponse response = new StudySimpleResponse(1L, "알고리즘", "알고리즘 스터디입니다.",
-                LocalDate.parse("2020-01-01"),
-                LocalDate.parse("2020-02-01"), StudyStatus.IN_PROGRESS, false, teamReferenceResponse,
-                cropReferenceResponse, List.of(curriculumItemReferenceResponse));
-        return response;
+    @Test
+    @DisplayName("팀의 스터디 목록(스터디 랭킹)을 조회한다.")
+    public void 팀의_스터디_목록스터디_랭킹을_조회한다() throws Exception {
+        final StudyReferenceResponse studyReferenceResponse =
+                new StudyReferenceResponse(1L, "study1", "this is study 1", LocalDate.of(2024, 7, 6),
+                        LocalDate.of(2024, 7, 7), StudyStatus.IN_PROGRESS, 1L, 60L);
+        final StudyRankResponse studyRankResponse = new StudyRankResponse(0, studyReferenceResponse);
+        final StudyReferenceResponse otherStudyReferenceResponse =
+                new StudyReferenceResponse(2L, "study2", "this is study 2", LocalDate.of(2024, 7, 6),
+                        LocalDate.of(2024, 8, 7), StudyStatus.IN_PROGRESS, 2L, 50L);
+        final StudyRankResponse otherStudyRankResponse = new StudyRankResponse(20, otherStudyReferenceResponse);
+
+        when(studyQueryService.getTeamStudies(any(), any())).thenReturn(
+                List.of(studyRankResponse, otherStudyRankResponse));
+
+        final MultiValueMap<String, String> params = new LinkedMultiValueMap<>() {{
+            add("page", "0");
+            add("size", "4");
+        }};
+        mockMvc.perform(get("/teams/{teamId}/studies", 1).params(params))
+                .andExpect(status().isOk())
+                .andDo(document("team-studies-get",
+                        pathParameters(
+                                parameterWithName("teamId").description("팀 id")
+                        ),
+                        queryParameters(
+                                parameterWithName("page").description("페이지 (default: 0)"),
+                                parameterWithName("size").description("한 페이지당 불러올 개수 (default: 4)")
+                        )));
     }
 }

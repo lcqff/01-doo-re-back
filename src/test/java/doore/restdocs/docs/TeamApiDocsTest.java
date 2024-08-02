@@ -19,17 +19,19 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.restdocs.request.RequestDocumentation.requestParts;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import doore.garden.application.dto.response.DayGardenResponse;
 import doore.restdocs.RestDocsTest;
-import doore.study.application.dto.response.StudyNameResponse;
 import doore.team.application.dto.request.TeamCreateRequest;
 import doore.team.application.dto.request.TeamInviteCodeRequest;
 import doore.team.application.dto.request.TeamUpdateRequest;
-import doore.team.application.dto.response.MyTeamsAndStudiesResponse;
 import doore.team.application.dto.response.TeamInviteCodeResponse;
+import doore.team.application.dto.response.TeamRankResponse;
 import doore.team.application.dto.response.TeamReferenceResponse;
+import doore.team.application.dto.response.TeamResponse;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -93,7 +95,7 @@ public class TeamApiDocsTest extends RestDocsTest {
         final TeamUpdateRequest request = new TeamUpdateRequest("BDD", "개발 동아리 입니다.");
 
         // when
-        Long teamId = 1L;
+        final Long teamId = 1L;
         doNothing().when(teamCommandService).updateTeam(eq(teamId), any(TeamUpdateRequest.class), any());
 
         // then
@@ -119,7 +121,7 @@ public class TeamApiDocsTest extends RestDocsTest {
         final MockMultipartFile file = getMockImageFile();
 
         // when
-        Long teamId = 1L;
+        final Long teamId = 1L;
         doNothing().when(teamCommandService).updateTeamImage(eq(teamId), any(MultipartFile.class), any());
 
         // then
@@ -145,7 +147,7 @@ public class TeamApiDocsTest extends RestDocsTest {
     @DisplayName("팀을 삭제한다.")
     public void 팀을_삭제한다() throws Exception {
         // when
-        Long teamId = 1L;
+        final Long teamId = 1L;
         doNothing().when(teamCommandService).deleteTeam(eq(teamId), any());
 
         // then
@@ -162,7 +164,7 @@ public class TeamApiDocsTest extends RestDocsTest {
     @DisplayName("팀의 초대코드를 생성한다.")
     public void 팀의_초대코드를_생성한다() throws Exception {
         // given
-        Long teamId = 1L;
+        final Long teamId = 1L;
         final TeamInviteCodeResponse response = new TeamInviteCodeResponse("asdf");
 
         // when
@@ -186,7 +188,7 @@ public class TeamApiDocsTest extends RestDocsTest {
     @DisplayName("초대코드를 통해 팀에 가입한다.")
     public void 초대코드를_통해_팀에_가입한다() throws Exception {
         // given
-        Long teamId = 1L;
+        final Long teamId = 1L;
         final TeamInviteCodeRequest request = new TeamInviteCodeRequest("asdf");
 
         // when
@@ -208,13 +210,10 @@ public class TeamApiDocsTest extends RestDocsTest {
     }
 
     @Test
-    @Disabled //todo: 모든 권한관련 코드 처리 후 확인할 예정
     @DisplayName("나의 팀 목록을 조회한다")
     void 나의_팀_목록을_조회한다() throws Exception {
         //given
-        final String FAKE_BEARER_ACCESS_TOKEN = "Bearer AccessToken";
         final Long memberId = 1L;
-        final Long tokenMemberId = 1L;
         final List<TeamReferenceResponse> response = List.of(
                 new TeamReferenceResponse(1L, "BDD", "개발 동아리입니다", "image.png"),
                 new TeamReferenceResponse(3L, "KEEPER", "보안 동아리입니다", "image.png")
@@ -231,11 +230,11 @@ public class TeamApiDocsTest extends RestDocsTest {
         );
 
         //when
-        when(teamQueryService.findMyTeams(eq(memberId), eq(tokenMemberId))).thenReturn(response);
+        when(teamQueryService.findMyTeams(any(), any())).thenReturn(response);
 
         //then
         mockMvc.perform(get("/teams/members/{memberId}", memberId)
-                        .header(HttpHeaders.AUTHORIZATION, FAKE_BEARER_ACCESS_TOKEN)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isOk())
@@ -244,39 +243,81 @@ public class TeamApiDocsTest extends RestDocsTest {
     }
 
     @Test
-    @Disabled //todo: 모든 권한관련 코드 처리 후 확인할 예정
-    @DisplayName("나의 팀과 스터디 목록을 조회한다")
-    void 나의_팀과_스터디_목록을_조회한다() throws Exception {
-        //given
-        final String FAKE_BEARER_ACCESS_TOKEN = "Bearer AccessToken";
-        final Long memberId = 1L;
-        final Long tokenMemberId = 1L;
-        final List<StudyNameResponse> studyResponses = List.of(
-                 new StudyNameResponse(1L, "알고리즘 스터디"),
-                new StudyNameResponse(2L,"개발 스터디")
-        );
-        final List<MyTeamsAndStudiesResponse> response = List.of(
-                new MyTeamsAndStudiesResponse(1L, "BDD", studyResponses)
-        );
+    @DisplayName("팀 상세목록을 조회한다.")
+    void 팀_상세목록을_조회한다() throws Exception {
+        final Long teamId = 1L;
 
+        final TeamResponse teamResponse = new TeamResponse(1L, "팀 이름", "팀 설명", "1234", 50, 1L);
         final PathParametersSnippet pathParameters = pathParameters(
-                parameterWithName("memberId").description("팀 목록을 조회하고자 하는 회원 ID")
+                parameterWithName("teamId").description("조회하고자 하는 팀 ID")
         );
+
         final ResponseFieldsSnippet responseFieldsSnippet = responseFields(
-                numberFieldWithPath("[].teamId", "팀의 ID"),
-                stringFieldWithPath("[].teamName", "팀의 이름"),
-                numberFieldWithPath("[].teamStudies.[].id", "팀에 포함되는 스터디 id"),
-                stringFieldWithPath("[].teamStudies.[].name", "팀에 포함되는 스터디 이름")
+                numberFieldWithPath("id", "팀 ID"),
+                stringFieldWithPath("name", "팀 이름"),
+                stringFieldWithPath("description", "팀 설명"),
+                stringFieldWithPath("imageUrl", "이미지 url"),
+                numberFieldWithPath("attendanceRatio", "출석률"),
+                numberFieldWithPath("teamLeaderId", "팀장 ID")
         );
 
-        //when
-        when(teamQueryService.findMyTeamsAndStudies(memberId, tokenMemberId)).thenReturn(response);
+        when(teamQueryService.findTeamByTeamId(teamId)).thenReturn(teamResponse);
 
-        //then
-        mockMvc.perform(get("/teams/members/{memberId}/studies", memberId)
-                        .header(HttpHeaders.AUTHORIZATION, FAKE_BEARER_ACCESS_TOKEN)
+        mockMvc.perform(get("/teams/{teamId}", teamId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andDo(document("my-teams-and-studies", pathParameters, responseFieldsSnippet));
+                .andDo(document("get-team", pathParameters, responseFieldsSnippet));
+    }
+
+    @Test
+    @DisplayName("팀 목록(팀 랭킹)을 조회한다.")
+    public void 팀_목록팀_랭킹을_조회한다() throws Exception {
+        //given
+        final List<TeamRankResponse> teamRankResponses = new ArrayList<>();
+        final List<DayGardenResponse> gardenResponse = List.of(
+                DayGardenResponse.builder()
+                        .contributeDate(LocalDate.of(2024, 1, 1))
+                        .contributeCount(2)
+                        .build(),
+                DayGardenResponse.builder()
+                        .contributeDate(LocalDate.of(2024, 1, 2))
+                        .contributeCount(1)
+                        .build(),
+                DayGardenResponse.builder()
+                        .contributeDate(LocalDate.of(2024, 1, 7))
+                        .contributeCount(5)
+                        .build()
+        );
+        teamRankResponses.add(new TeamRankResponse(20,
+                new TeamReferenceResponse(3L, "팀3", "팀 설명입니다", "팀 이미지 Url"),
+                gardenResponse));
+        teamRankResponses.add(new TeamRankResponse(15,
+                new TeamReferenceResponse(2L, "팀2", "팀 설명입니다", "팀 이미지 Url"),
+                gardenResponse));
+        teamRankResponses.add(new TeamRankResponse(5,
+                new TeamReferenceResponse(1L, "팀1", "팀 설명입니다", "팀 이미지 Url"),
+                gardenResponse));
+        teamRankResponses.add(new TeamRankResponse(0,
+                new TeamReferenceResponse(4L, "팀4", "팀 설명입니다", "팀 이미지 Url"),
+                gardenResponse));
+
+        //when
+        when(teamQueryService.getTeamRanks()).thenReturn(teamRankResponses);
+
+        //then
+        final ResponseFieldsSnippet responseFieldsSnippet = responseFields(
+                numberFieldWithPath("[].point", "팀 점수 총합"),
+                numberFieldWithPath("[].teamReferenceResponse.id", "팀의 ID"),
+                stringFieldWithPath("[].teamReferenceResponse.name", "팀의 이름"),
+                stringFieldWithPath("[].teamReferenceResponse.description", "팀의 설명"),
+                stringFieldWithPath("[].teamReferenceResponse.imageUrl", "팀의 이미지 URL"),
+                stringFieldWithPath("[].teamGardenResponse.[].contributeDate", "기여된 날짜"),
+                numberFieldWithPath("[].teamGardenResponse.[].contributeCount", "그날의 기여도(기여된 횟수)")
+        );
+
+        mockMvc.perform(get("/teams")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document("get-team-week-rank", responseFieldsSnippet));
     }
 }

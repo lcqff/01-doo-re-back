@@ -1,12 +1,12 @@
 package doore.study.application;
 
 import static doore.member.domain.StudyRoleType.ROLE_스터디원;
-import static doore.member.domain.StudyRoleType.ROLE_스터디장;
 import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER;
 import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_IN_STUDY;
 import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 
+import doore.member.application.convenience.StudyRoleValidateAccessPermission;
 import doore.member.domain.Member;
 import doore.member.domain.Participant;
 import doore.member.domain.StudyRole;
@@ -29,52 +29,57 @@ public class ParticipantCommandService {
     private final MemberRepository memberRepository;
     private final StudyRoleRepository studyRoleRepository;
 
-    public void saveParticipant(Long studyId, Long memberId, Long studyLeaderId) {
-        validateExistStudyLeader(studyLeaderId);
+    private final StudyRoleValidateAccessPermission studyRoleValidateAccessPermission;
+
+    public void saveParticipant(final Long studyId, final Long memberId, final Long studyLeaderId) {
+        studyRoleValidateAccessPermission.validateExistStudyLeader(studyId, studyLeaderId);
         validateExistStudy(studyId);
-        Member member = validateExistMember(memberId);
-        Participant participant = Participant.builder()
+        final Member member = validateExistMember(memberId);
+        final Participant participant = Participant.builder()
                 .studyId(studyId)
                 .member(member)
                 .build();
         participantRepository.save(participant);
+        assignParticipantRole(studyId, memberId, studyLeaderId);
     }
 
-    public void deleteParticipant(Long studyId, Long memberId, Long studyLeaderId) {
-        validateExistStudyLeader(studyLeaderId);
+    private void assignParticipantRole(Long studyId, Long memberId, Long studyLeaderId) {
+        if (!memberId.equals(studyLeaderId)) {
+            studyRoleRepository.save(StudyRole.builder()
+                    .studyRoleType(ROLE_스터디원)
+                    .studyId(studyId)
+                    .memberId(memberId)
+                    .build());
+        }
+    }
+
+    public void deleteParticipant(final Long studyId, final Long memberId, final Long studyLeaderId) {
+        studyRoleValidateAccessPermission.validateExistStudyLeader(studyId, studyLeaderId);
         validateExistStudy(studyId);
-        Member member = validateExistMember(memberId);
+        final Member member = validateExistMember(memberId);
         participantRepository.deleteByStudyIdAndMember(studyId, member);
     }
 
-    public void withdrawParticipant(Long studyId, Long memberId, Long participantId) {
-        validateExistParticipant(participantId);
+    public void withdrawParticipant(final Long studyId, final Long memberId, final Long participantId) {
+        validateExistParticipant(studyId, participantId);
         validateExistStudy(studyId);
-        Member member = memberRepository.findById(memberId)
+        final Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
         participantRepository.deleteByStudyIdAndMember(studyId, member);
     }
 
-    private void validateExistStudy(Long studyId) {
+    private void validateExistStudy(final Long studyId) {
         studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
     }
 
-    private Member validateExistMember(Long memberId) {
+    private Member validateExistMember(final Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
     }
 
-    private void validateExistStudyLeader(Long memberId) {
-        StudyRole studyRole = studyRoleRepository.findById(memberId)
+    private void validateExistParticipant(final Long studyId, final Long memberId) {
+        final StudyRole studyRole = studyRoleRepository.findStudyRoleByStudyIdAndMemberId(studyId, memberId)
                 .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_STUDY));
-        if (!studyRole.getStudyRoleType().equals(ROLE_스터디장)){
-            throw new MemberException(UNAUTHORIZED);
-        }
-    }
-
-    private void validateExistParticipant(Long memberId) {
-        StudyRole studyRole = studyRoleRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_STUDY));
-        if (!studyRole.getStudyRoleType().equals(ROLE_스터디원)){
+        if (!studyRole.getStudyRoleType().equals(ROLE_스터디원)) {
             throw new MemberException(UNAUTHORIZED);
         }
     }

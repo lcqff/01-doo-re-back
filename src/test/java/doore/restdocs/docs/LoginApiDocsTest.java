@@ -39,8 +39,8 @@ public class LoginApiDocsTest extends RestDocsTest {
         );
 
         mockMvc.perform(post("/login/google")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(request))).andExpect(status().isOk())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(request))).andExpect(status().isOk())
                 .andDo(document("login-google", requestFields, responseFields));
     }
 }

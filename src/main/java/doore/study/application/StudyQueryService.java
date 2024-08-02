@@ -1,6 +1,5 @@
 package doore.study.application;
 
-import static doore.crop.exception.CropExceptionType.NOT_FOUND_CROP;
 import static doore.member.domain.StudyRoleType.ROLE_스터디원;
 import static doore.member.domain.StudyRoleType.ROLE_스터디장;
 import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER;
@@ -8,31 +7,27 @@ import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_I
 import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
-import static java.util.stream.Collectors.groupingBy;
 
-import doore.crop.domain.Crop;
-import doore.crop.domain.repository.CropRepository;
-import doore.crop.exception.CropException;
+import doore.member.domain.Participant;
 import doore.member.domain.StudyRole;
 import doore.member.domain.repository.MemberRepository;
+import doore.member.domain.repository.ParticipantRepository;
 import doore.member.domain.repository.StudyRoleRepository;
 import doore.member.exception.MemberException;
+import doore.study.application.dto.response.StudyRankResponse;
+import doore.study.application.dto.response.StudyReferenceResponse;
 import doore.study.application.dto.response.StudyResponse;
-import doore.study.application.dto.response.StudySimpleResponse;
 import doore.study.domain.Study;
+import doore.study.domain.repository.CurriculumItemRepository;
+import doore.study.domain.repository.ParticipantCurriculumItemRepository;
 import doore.study.domain.repository.StudyRepository;
 import doore.study.exception.StudyException;
-import doore.study.persistence.StudyDao;
-import doore.study.persistence.dto.StudyInformation;
-import doore.study.persistence.dto.StudyOverview;
 import doore.team.domain.Team;
 import doore.team.domain.TeamRepository;
 import doore.team.exception.TeamException;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,56 +37,78 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudyQueryService {
     private final StudyRepository studyRepository;
     private final StudyRoleRepository studyRoleRepository;
+    private final ParticipantRepository participantRepository;
+    private final ParticipantCurriculumItemRepository participantCurriculumItemRepository;
+    private final CurriculumItemRepository curriculumItemRepository;
     private final TeamRepository teamRepository;
-    private final CropRepository cropRepository;
     private final MemberRepository memberRepository;
-    private final StudyDao studyDao;
 
-    public StudyResponse findStudyById(Long studyId, Long memberId) {
-        Study study = studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
-        validateExistStudyLeaderAndParticipant(memberId);
+    public StudyResponse findStudyById(final Long studyId) {
+        final Study study = studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
+        final Long studyLeaderId = studyRoleRepository.findLeaderIdByStudyId(study.getId());
 
         final Team team = teamRepository.findById(study.getTeamId())
                 .orElseThrow(() -> new TeamException(NOT_FOUND_TEAM));
-        final Crop crop = cropRepository.findById(study.getCropId())
-                .orElseThrow(() -> new CropException(NOT_FOUND_CROP));
+        final long studyProgressRatio = checkStudyProgressRatio(studyId);
 
-        return StudyResponse.of(study, team, crop);
+        return StudyResponse.of(study, team, studyProgressRatio, studyLeaderId);
     }
 
-    public List<StudySimpleResponse> findMyStudies(final Long memberId, final Long tokenMemberId) {
+    public List<StudyReferenceResponse> findMyStudies(final Long memberId, final Long tokenMemberId) {
         checkSameMemberIdAndTokenMemberId(memberId, tokenMemberId);
-        final List<StudyOverview> studyOverviews = studyDao.findMyStudy(memberId);
-        final Map<StudyInformation, List<StudyOverview>> map = studyOverviews.stream()
-                .collect(groupingBy(StudyOverview::getStudyInformation));
-        return map.entrySet().stream()
-                .peek(entry -> {
-                    if (entry.getValue().stream().anyMatch(overview -> overview.getCurriculumName() == null)) {
-                        entry.setValue(Collections.emptyList());
-                    }
-                    entry.setValue(entry.getValue().stream()
-                            .sorted(Comparator.comparing(StudyOverview::getCurriculumItemOrder))
-                            .toList());
-                })
-                .map(entry -> StudySimpleResponse.of(entry.getKey(), entry.getValue()))
+
+        final List<Participant> participants = participantRepository.findByMemberId(memberId);
+        final List<Long> studyIds = participants.stream()
+                .map(Participant::getStudyId)
+                .toList();
+        final List<Study> studies = studyRepository.findAllById(studyIds);
+
+        return studies.stream()
+                .map(study -> StudyReferenceResponse.of(study, checkStudyProgressRatio(study.getId())))
                 .toList();
     }
 
     private void checkSameMemberIdAndTokenMemberId(final Long memberId, final Long tokenMemberId) {
-        if (!memberId.equals(tokenMemberId)){
+        if (!memberId.equals(tokenMemberId)) {
             throw new MemberException(UNAUTHORIZED);
         }
     }
 
-    private void validateExistStudyLeaderAndParticipant(Long memberId) {
-        StudyRole studyRole = studyRoleRepository.findById(memberId)
+    private void validateExistStudyLeaderAndParticipant(final Long memberId) {
+        final StudyRole studyRole = studyRoleRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER_ROLE_IN_STUDY));
-        if (!(studyRole.getStudyRoleType().equals(ROLE_스터디장) || studyRole.getStudyRoleType().equals(ROLE_스터디원))){
+        if (!(studyRole.getStudyRoleType().equals(ROLE_스터디장) || studyRole.getStudyRoleType().equals(ROLE_스터디원))) {
             throw new MemberException(UNAUTHORIZED);
         }
     }
 
-    private void validateExistMember(Long memberId) {
+    private void validateExistMember(final Long memberId) {
         memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
+    }
+
+    private long checkStudyProgressRatio(final Long studyId) {
+        final List<Long> curriculumItemIds = curriculumItemRepository.findIdsByStudyId(studyId);
+        final long totalCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdIn(
+                curriculumItemIds);
+        final long checkedTrueCurriculumItems = participantCurriculumItemRepository.countByCurriculumItemIdInAndIsCheckedTrue(
+                curriculumItemIds);
+        return totalCurriculumItems > 0 ? (checkedTrueCurriculumItems * 100) / totalCurriculumItems : 0;
+    }
+    
+    public List<StudyRankResponse> getTeamStudies(final Long teamId, final Pageable pageable) {
+        return studyRepository.findAllByTeamId(teamId, pageable)
+                .map(this::convertStudyToStudyRankResponse).getContent();
+        //todo: (24.07.09) point 기반 정렬 로직 추가;
+    }
+
+    private StudyRankResponse convertStudyToStudyRankResponse(final Study study) {
+        StudyReferenceResponse studyReferenceResponse = StudyReferenceResponse.of(study,
+                checkStudyProgressRatio(study.getId()));
+        return new StudyRankResponse(calculatePoint(study), studyReferenceResponse);
+    }
+
+    private int calculatePoint(final Study study) {
+        //todo: (24.07.09) 스터디 점수 계산 방식에 대해 논의 후 로직 추가 (디스커션 #163 참고)
+        return 0;
     }
 }

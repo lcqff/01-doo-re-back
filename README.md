@@ -16,6 +16,8 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
 <br><br>
 
 ## 🧑🏻‍💻 기획 & 개발
+
+### 2023.11.12 ~2024.3.1
 <div align="center">
   <table>
   <tr>
@@ -77,8 +79,80 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
       <br/>
     </td>
   </tr>
+      <tr>
+    <td align="center">
+       BackEnd
+    </td>    
+    <td align="center">
+      Infra
+    </td>
+    <td align="center">
+       BackEnd, Infra
+    </td>
+    <td align="center">
+       BackEnd, Infra
+    </td>
+    <td align="center">
+       BackEnd
+    </td>
+  </tr>
 </table>
+</div>
 
+
+### 2024.3.1 ~ 진행중
+<div align="center">
+  <table>
+  <tr>
+    <td align="center">
+      임연후
+    </td>    
+    </td>
+    <td align="center">
+      이지민 
+    </td>
+    <td align="center">
+      임지민
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/lcqff">
+        <img src="https://github.com/lcqff.png" width="80" alt="lcqff"/>
+        <br/>
+        <sub><b>lcqff</b></sub>
+      </a>
+      <br/>
+    </td>
+    <td align="center">
+      <a href="https://github.com/JJimini">
+      <img src="https://github.com/JJimini.png" width="80" alt="JJimini"/>
+      <br />
+      <sub><b>JJimini</b></sub>
+      </a>
+      <br/>
+    </td>
+    <td align="center">
+      <a href="https://github.com/jimini1026">
+      <img src="https://github.com/jimini1026.png" width="80" alt="jimini1026"/>
+      <br />
+      <sub><b>jimini1026</b></sub>
+      </a>
+      <br/>
+    </td>
+  </tr>
+      <tr>
+    <td align="center">
+       BackEnd, Infra
+    </td>    
+    <td align="center">
+      BackEnd
+    </td>
+    <td align="center">
+       BackEnd
+    </td>
+  </tr>
+  </table>
 </div>
 
 ## :pencil2: 기술 스택
@@ -142,25 +216,6 @@ Rest Docs: https://www.doore.kro.kr/docs/doore.html
    │     └─ schema.sql
    └─ test
 ```
-
-## :hand: 역할 분담
-
-#### 임연후(팜)
-- **BackEnd**: 스터디 CRUD, 참여자 CRUD, S3 파일 저장, 학습자료 CRUD, RestDocs 세팅, Cors 설정
-
-#### 송세연 (아마란스)
-- **BackEnd**: 소셜 로그인, 팀원 목록 조회 및 검색
-- **Infra**: 배포 서버 CICD 작성, 운영서버 Redis 세팅
-  
-#### 이수빈(짱구)
-- **Infra**: CICD 파이프라인 구축, 백엔드 서버 도커 파일 작성, HTTPS 적용, CICD 캐싱 적용, CICD DB Docker 고도화, YML 서브모듈 도입, NGINX 설정
-
-#### 이지민(미나)
-- **BackEnd**: 커리큘럼 CRUD, 커리큘럼 관리
-
-#### 손현경(보름)
-- **BackEnd**: S3 이미지 저장, 팀원 초대 링크 생성, 팀원 추가
-- **Infra**: CICD 파이프라인 구축, 백엔드 서버 도커 파일 작성
 
 ## :seedling: Features
 
