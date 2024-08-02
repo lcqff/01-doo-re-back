@@ -1,18 +1,26 @@
 package doore.team.application;
 
+import static doore.member.MemberFixture.createMember;
 import static doore.member.MemberFixture.미나;
 import static doore.member.MemberFixture.아마란스;
+import static doore.member.domain.TeamRoleType.ROLE_팀장;
 import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.team.TeamFixture.team;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import doore.attendance.domain.Attendance;
+import doore.attendance.domain.repository.AttendanceRepository;
 import doore.helper.IntegrationTest;
 import doore.member.domain.Member;
 import doore.member.domain.MemberTeam;
+import doore.member.domain.TeamRole;
 import doore.member.domain.repository.MemberRepository;
 import doore.member.domain.repository.MemberTeamRepository;
+import doore.member.domain.repository.TeamRoleRepository;
 import doore.member.exception.MemberException;
 import doore.team.application.dto.response.TeamReferenceResponse;
+import doore.team.application.dto.response.TeamResponse;
 import doore.team.domain.Team;
 import doore.team.domain.TeamRepository;
 import java.util.List;
@@ -31,12 +39,23 @@ class TeamQueryServiceTest extends IntegrationTest {
     private MemberTeamRepository memberTeamRepository;
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+    @Autowired
+    private TeamRoleRepository teamRoleRepository;
 
-    private Long memberId;
+    private Member member;
+    private Team team;
 
     @BeforeEach
     void setUp() {
-        memberId = memberRepository.save(미나()).getId();
+        member = memberRepository.save(미나());
+        team = teamRepository.save(team());
+        teamRoleRepository.save(TeamRole.builder()
+                .teamId(team.getId())
+                .teamRoleType(ROLE_팀장)
+                .memberId(member.getId())
+                .build());
     }
 
     @Test
@@ -67,10 +86,28 @@ class TeamQueryServiceTest extends IntegrationTest {
     @Test
     @DisplayName("[실패] 다른 사람의 팀 목록 조회는 불가능하다.")
     void findMyTeams_다른_사람의_팀_목록_조회는_불가능하다_실패() {
-        Long anotherMemberId = 2L;
+        final Long anotherMemberId = 2L;
         // 로그인 되어있는 아이디와 조회하려는 아이디가 다른 경우 실패 (주석은 확인 후 삭제할 예정입니다.)
         assertThatThrownBy(() -> {
-            teamQueryService.findMyTeams(memberId, anotherMemberId);
+            teamQueryService.findMyTeams(member.getId(), anotherMemberId);
         }).isInstanceOf(MemberException.class).hasMessage(UNAUTHORIZED.errorMessage());
+    }
+
+    @Test
+    @DisplayName("[성공] 팀 상세 조회를 할 수 있다.")
+    void findTeamByTeamId_팀_상세_조회를_할_수_있다_성공() {
+        final Member anotherMember = createMember();
+        memberTeamRepository.save(MemberTeam.builder().teamId(team.getId()).member(member).isDeleted(false).build());
+        memberTeamRepository.save(
+                MemberTeam.builder().teamId(team.getId()).member(anotherMember).isDeleted(false).build());
+        attendanceRepository.save(Attendance.builder().memberId(anotherMember.getId()).build());
+
+        final long attendanceRatio = 50L;
+
+        final TeamResponse expectTeamResponse = TeamResponse.of(team, attendanceRatio, member.getId());
+        final TeamResponse actualTeamResponse = teamQueryService.findTeamByTeamId(team.getId());
+
+        assertThat(actualTeamResponse).isEqualTo(expectTeamResponse);
+        assertThat(actualTeamResponse.teamLeaderId()).isEqualTo(member.getId());
     }
 }

@@ -22,8 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import doore.document.application.dto.request.DocumentCreateRequest;
 import doore.document.application.dto.request.DocumentUpdateRequest;
-import doore.document.application.dto.response.DocumentCondensedResponse;
-import doore.document.application.dto.response.DocumentDetailResponse;
+import doore.document.application.dto.response.DocumentResponse;
 import doore.document.application.dto.response.FileResponse;
 import doore.document.domain.DocumentAccessType;
 import doore.restdocs.RestDocsTest;
@@ -56,7 +55,7 @@ public class DocumentDocsTest extends RestDocsTest {
     @Test
     @DisplayName("학습자료를 생성한다.")
     public void 학습자료를_생성한다() throws Exception {
-        DocumentCreateRequest request = new DocumentCreateRequest("발표 자료", "이번주 발표자료입니다.",
+        final DocumentCreateRequest request = new DocumentCreateRequest("발표 자료", "이번주 발표자료입니다.",
                 DocumentAccessType.TEAM, IMAGE, null, 1L);
         final MockPart mockPart = getMockPart("request", request);
         mockPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
@@ -98,15 +97,32 @@ public class DocumentDocsTest extends RestDocsTest {
     @DisplayName("학습자료 목록을 조회한다.")
     public void 학습자료_목록을_조회한다() throws Exception {
         //given
-        DocumentCondensedResponse documentCondensedResponse =
-                new DocumentCondensedResponse(1L, "학습자료1", "학습자료1 입니다.", LocalDate.parse("2020-02-02"), 1L);
-        DocumentCondensedResponse otherDocumentCondensedResponse =
-                new DocumentCondensedResponse(2L, "학습자료2", "학습자료2 입니다.", LocalDate.parse("2020-02-03"), 2L);
-        Page<DocumentCondensedResponse> documentCondensedResponses = new PageImpl<>(
-                List.of(documentCondensedResponse, otherDocumentCondensedResponse), PageRequest.of(0,4),2);
+        final FileResponse fileResponse = new FileResponse(1L, "s3 url");
+        final DocumentResponse document = DocumentResponse.builder()
+                .id(1L)
+                .title("학습자료")
+                .description("학습자료 입니다.")
+                .accessType(ALL)
+                .type(IMAGE)
+                .files(List.of(fileResponse))
+                .date(LocalDate.parse("2024-02-28"))
+                .uploaderName("김땡땡")
+                .build();
+        final DocumentResponse otherDocument = DocumentResponse.builder()
+                .id(1L)
+                .title("학습자료")
+                .description("학습자료 입니다.")
+                .accessType(ALL)
+                .type(IMAGE)
+                .files(List.of(fileResponse))
+                .date(LocalDate.parse("2024-02-28"))
+                .uploaderName("김땡땡")
+                .build();
+        final List<DocumentResponse> documents = List.of(document, otherDocument);
+        final Page<DocumentResponse> documentResponsePage = new PageImpl<>(documents, PageRequest.of(0,4),documents.size());
         //when
-        when(documentQueryService.getAllDocument(any(), any(), any(PageRequest.class), any()))
-                .thenReturn(documentCondensedResponses);
+        when(documentQueryService.getAllDocument(any(), any(), any(PageRequest.class)))
+                .thenReturn(documentResponsePage);
 
         //then
         final MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -129,8 +145,8 @@ public class DocumentDocsTest extends RestDocsTest {
     @DisplayName("학습자료를 조회한다.")
     public void 학습자료를_조회한다() throws Exception {
         //given
-        FileResponse fileResponse = new FileResponse(1L, "s3 url");
-        DocumentDetailResponse documentDetailResponse = DocumentDetailResponse.builder()
+        final FileResponse fileResponse = new FileResponse(1L, "s3 url");
+        final DocumentResponse documentResponse = DocumentResponse.builder()
                 .id(1L)
                 .title("학습자료")
                 .description("학습자료 입니다.")
@@ -138,11 +154,11 @@ public class DocumentDocsTest extends RestDocsTest {
                 .type(IMAGE)
                 .files(List.of(fileResponse))
                 .date(LocalDate.parse("2024-02-28"))
-                .uploader("김땡땡")
+                .uploaderName("김땡땡")
                 .build();
 
         //when
-        when(documentQueryService.getDocument(any(), any())).thenReturn(documentDetailResponse);
+        when(documentQueryService.getDocument(any(), any())).thenReturn(documentResponse);
 
         //then
         mockMvc.perform(get("/{documentId}", 1).header(HttpHeaders.AUTHORIZATION, accessToken))
@@ -160,7 +176,7 @@ public class DocumentDocsTest extends RestDocsTest {
                                 numberFieldWithPath("files[].id", "첨부파일 id"),
                                 stringFieldWithPath("files[].url", "첨부파일 URL"),
                                 stringFieldWithPath("date", "학습자료 업로드 날짜"),
-                                stringFieldWithPath("uploader", "학습자료 업로더")
+                                stringFieldWithPath("uploaderName", "학습자료 업로더 이름")
                         )
                 ));
     }
@@ -169,7 +185,7 @@ public class DocumentDocsTest extends RestDocsTest {
     @DisplayName("학습자료를 수정한다.")
     public void 학습자료를_수정한다() throws Exception {
         //given
-        DocumentUpdateRequest request = new DocumentUpdateRequest("수정된 제목", "수정된 설명", TEAM);
+        final DocumentUpdateRequest request = new DocumentUpdateRequest("수정된 제목", "수정된 설명", TEAM);
 
         //then
         mockMvc.perform(put("/{documentId}", 1)

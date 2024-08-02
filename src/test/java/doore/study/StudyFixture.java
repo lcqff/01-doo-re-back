@@ -1,7 +1,5 @@
 package doore.study;
 
-import static doore.crop.CropFixture.createCrop;
-
 import doore.study.domain.CurriculumItem;
 import doore.study.domain.Study;
 import doore.study.domain.StudyStatus;
@@ -21,14 +19,13 @@ public class StudyFixture {
     private static Long cropId = 1L;
 
     @Autowired
-    public StudyFixture(StudyRepository studyRepository, TeamRepository teamRepository) {
+    public StudyFixture(final StudyRepository studyRepository, final TeamRepository teamRepository) {
         StudyFixture.studyRepository = studyRepository;
         StudyFixture.teamRepository = teamRepository;
     }
 
     public static Study createStudy() {
         teamId = teamRepository.save(TeamFixture.team()).getId();
-        cropId = createCrop().getId();
         return studyRepository.save(StudyFixture.algorithmStudy());
     }
 

@@ -76,7 +76,6 @@ public class MemberApiDocsTest extends RestDocsTest {
                         .header(HttpHeaders.AUTHORIZATION, accessToken))
                 .andExpect(status().isNoContent())
                 .andDo(document("update-my-page-name", pathParameters(
-                        parameterWithName("memberId").description("회원 id")
-                )));
+                        parameterWithName("memberId").description("회원 id"))));
     }
 }
