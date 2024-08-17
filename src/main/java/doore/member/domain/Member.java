@@ -47,4 +47,8 @@ public class Member extends BaseEntity {
         this.imageUrl = imageUrl;
         this.isDeleted = false;
     }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
 }

@@ -46,11 +46,11 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/profile/members/{memberId}")
-    public ResponseEntity<Void> updateMyPage(@PathVariable Long memberId,
-                                             @RequestBody MemberUpdateRequest memberUpdateRequest,
-                                             @LoginMember Member member) {
-        memberCommandService.updateMyPage(member.getId(), memberId, memberUpdateRequest);
+    @PatchMapping("/profile/members")
+    public ResponseEntity<Void> updateMyPage(
+            @RequestBody final MemberUpdateRequest memberUpdateRequest,
+            @LoginMember final Member member) {
+        memberCommandService.updateMyPage(member.getId(), memberUpdateRequest);
         return ResponseEntity.noContent().build();
     }
 

@@ -90,7 +90,7 @@ public class MemberCommandService {
         memberRepository.delete(member);
     }
 
-    private Member validateExistMember(final Long memberId) {
+    public Member validateExistMember(final Long memberId) {
         return memberRepository.findById(memberId).orElseThrow(() -> new MemberException(NOT_FOUND_MEMBER));
     }
 
@@ -102,19 +102,9 @@ public class MemberCommandService {
         return studyRepository.findById(studyId).orElseThrow(() -> new StudyException(NOT_FOUND_STUDY));
     }
 
-    public void updateMyPage(Long tokenMemberId, Long pathMemberId, MemberUpdateRequest memberUpdateRequest) {
-        if (!tokenMemberId.equals(pathMemberId)) {
-            throw new MemberException(UNAUTHORIZED);
-        }
-
-        Member member = validateExistMember(pathMemberId);
-        Member updatedMember = Member.builder()
-                .id(pathMemberId)
-                .name(memberUpdateRequest.getNewName())
-                .googleId(member.getGoogleId())
-                .email(member.getEmail())
-                .imageUrl(member.getImageUrl())
-                .build();
-        memberRepository.save(updatedMember);
+    public void updateMyPage(final Long memberId, final MemberUpdateRequest memberUpdateRequest) {
+        Member member = validateExistMember(memberId);
+        member.updateName(memberUpdateRequest.newName());
+        memberRepository.save(member);
     }
 }

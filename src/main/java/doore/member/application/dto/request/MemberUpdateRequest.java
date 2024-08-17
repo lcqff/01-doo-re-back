@@ -1,8 +1,9 @@
 package doore.member.application.dto.request;
 
-import lombok.Data;
+import lombok.Builder;
 
-@Data
-public class MemberUpdateRequest {
-    private String newName;
+@Builder
+public record MemberUpdateRequest(
+        String newName
+) {
 }
