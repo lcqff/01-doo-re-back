@@ -6,7 +6,9 @@ import static doore.member.exception.MemberExceptionType.NOT_FOUND_MEMBER_ROLE_I
 import static doore.member.exception.MemberExceptionType.UNAUTHORIZED;
 import static doore.study.exception.StudyExceptionType.NOT_FOUND_STUDY;
 
+import doore.member.application.convenience.MemberAuthorization;
 import doore.member.application.convenience.StudyRoleValidateAccessPermission;
+import doore.member.application.convenience.TeamRoleValidateAccessPermission;
 import doore.member.domain.Member;
 import doore.member.domain.Participant;
 import doore.member.domain.StudyRole;
@@ -14,6 +16,8 @@ import doore.member.domain.repository.MemberRepository;
 import doore.member.domain.repository.ParticipantRepository;
 import doore.member.domain.repository.StudyRoleRepository;
 import doore.member.exception.MemberException;
+import doore.study.application.convenience.StudyAuthorization;
+import doore.study.domain.Study;
 import doore.study.domain.repository.StudyRepository;
 import doore.study.exception.StudyException;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +32,16 @@ public class ParticipantCommandService {
     private final ParticipantRepository participantRepository;
     private final MemberRepository memberRepository;
     private final StudyRoleRepository studyRoleRepository;
-
+    private final MemberAuthorization memberAuthorization;
+    private final StudyAuthorization studyAuthorization;
     private final StudyRoleValidateAccessPermission studyRoleValidateAccessPermission;
+    private final TeamRoleValidateAccessPermission teamRoleValidateAccessPermission;
 
     public void saveParticipant(final Long studyId, final Long memberId, final Long studyLeaderId) {
         studyRoleValidateAccessPermission.validateExistStudyLeader(studyId, studyLeaderId);
-        validateExistStudy(studyId);
-        final Member member = validateExistMember(memberId);
+        Study study = studyAuthorization.getStudyOrThrow(studyId);
+        teamRoleValidateAccessPermission.validateExistMemberTeam(memberId, study.getTeamId());
+        final Member member = memberAuthorization.getMemberOrThrow(memberId);
         final Participant participant = Participant.builder()
                 .studyId(studyId)
                 .member(member)
