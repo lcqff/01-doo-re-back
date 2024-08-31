@@ -2,6 +2,7 @@ package doore.team.application.convenience;
 
 import static doore.team.exception.TeamExceptionType.NOT_FOUND_TEAM;
 
+import doore.team.domain.Team;
 import doore.team.domain.TeamRepository;
 import doore.team.exception.TeamException;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class TeamAuthorization {
     private final TeamRepository teamRepository;
 
-    public void validateExistTeam(Long groupId) {
-        teamRepository.findById(groupId).orElseThrow(() -> new TeamException(NOT_FOUND_TEAM));
+    public void validateExistTeam(final Long teamId) {
+        teamRepository.findById(teamId).orElseThrow(() -> new TeamException(NOT_FOUND_TEAM));
+    }
+
+    public Team getTeamOrThrow(final Long teamId) {
+        return teamRepository.findById(teamId).orElseThrow(() -> new TeamException(NOT_FOUND_TEAM));
     }
 }

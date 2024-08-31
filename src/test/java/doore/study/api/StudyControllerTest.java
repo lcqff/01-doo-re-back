@@ -9,8 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import doore.helper.IntegrationTest;
 import doore.member.domain.Member;
+import doore.member.domain.MemberTeam;
 import doore.member.domain.StudyRole;
 import doore.member.domain.TeamRole;
+import doore.member.domain.TeamRoleType;
+import doore.member.domain.repository.MemberTeamRepository;
 import doore.member.domain.repository.StudyRoleRepository;
 import doore.member.domain.repository.TeamRoleRepository;
 import doore.study.application.dto.request.StudyCreateRequest;
@@ -30,6 +33,8 @@ public class StudyControllerTest extends IntegrationTest {
     private StudyRoleRepository studyRoleRepository;
     @Autowired
     private TeamRoleRepository teamRoleRepository;
+    @Autowired
+    private MemberTeamRepository memberTeamRepository;
 
     private Member member;
     private Study study;
@@ -43,15 +48,19 @@ public class StudyControllerTest extends IntegrationTest {
         member = createMember();
         study = createStudy();
         team = createTeam();
-        teamRole = teamRoleRepository.save(TeamRole.builder()
-                .teamId(team.getId())
-                .teamRoleType(ROLE_팀원)
-                .memberId(member.getId())
-                .build());
         studyRole = studyRoleRepository.save(StudyRole.builder()
                 .studyId(study.getId())
                 .studyRoleType(ROLE_스터디장)
                 .memberId(member.getId())
+                .build());
+        memberTeamRepository.save(MemberTeam.builder()
+                .teamId(team.getId())
+                .member(member)
+                .build());
+        teamRoleRepository.save(TeamRole.builder()
+                .teamRoleType(TeamRoleType.ROLE_팀원)
+                .memberId(member.getId())
+                .teamId(team.getId())
                 .build());
         token = jwtTokenGenerator.generateToken(String.valueOf(member.getId()));
     }
