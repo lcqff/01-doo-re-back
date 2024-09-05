@@ -23,13 +23,14 @@ public class LoginApiDocsTest extends RestDocsTest {
     @DisplayName("구글 로그인을 한다.")
     public void 구글_로그인을_한다() throws Exception {
         //given
-        final GoogleLoginRequest request = new GoogleLoginRequest("Authorization_Code");
+        final GoogleLoginRequest request = new GoogleLoginRequest("Redirect_Uri","Authorization_Code");
         final LoginResponse response = new LoginResponse(3L, "doore.access.token");
         when(loginService.loginByGoogle(any(GoogleLoginRequest.class)))
                 .thenReturn(response);
 
         //when & then
         final RequestFieldsSnippet requestFields = requestFields(
+                stringFieldWithPath("redirectUri", "리다이렉트 Uri"),
                 stringFieldWithPath("code", "구글에서 발급받은 인가 코드")
         );
 

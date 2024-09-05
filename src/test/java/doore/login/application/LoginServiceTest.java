@@ -3,6 +3,7 @@ package doore.login.application;
 import static doore.member.MemberFixture.아마란스;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import doore.helper.IntegrationTest;
@@ -39,7 +40,7 @@ class LoginServiceTest extends IntegrationTest {
         final GoogleAccountProfileResponse profile = new GoogleAccountProfileResponse(
                 member.getGoogleId(), "aaa@gmail.com", true, "아마란스", "마란스", "아", "https://aaa", "ko"
         );
-        given(googleClient.getGoogleAccountProfile(validCode, redirectionUri)).willReturn(profile);
+        given(googleClient.getGoogleAccountProfile(any(), any())).willReturn(profile);
 
         //when
         final Long actualMemberId = loginService.loginByGoogle(request)
@@ -58,15 +59,14 @@ class LoginServiceTest extends IntegrationTest {
         final String code = "valid_code";
         final String redirectionUri = "redirection_uri";
         final String googleId = "4321";
-        final GoogleLoginRequest request = new GoogleLoginRequest(code,redirectionUri);
+        final GoogleLoginRequest request = new GoogleLoginRequest(code, redirectionUri);
         final GoogleAccountProfileResponse profile = new GoogleAccountProfileResponse(
                 googleId, "ppp@gmail.com", true, "프리지아", "리지아", "프", "https://aaa", "ko"
         );
-        given(googleClient.getGoogleAccountProfile(code, redirectionUri)).willReturn(profile);
+        given(googleClient.getGoogleAccountProfile(any(), any())).willReturn(profile);
 
         //when
-        final Long actual = loginService.loginByGoogle(request)
-                .memberId();
+        final Long actual = loginService.loginByGoogle(request).memberId();
         final Long afterCount = memberRepository.count();
         final Long newMemberId = memberRepository.findByGoogleId(googleId).get().getId();
 
