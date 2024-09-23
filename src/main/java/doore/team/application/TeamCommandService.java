@@ -59,11 +59,12 @@ public class TeamCommandService {
     private final TeamRoleValidateAccessPermission teamRoleValidateAccessPermission;
 
     private static final String INVITE_LINK_PREFIX = "teamId=%d";
+    private static final String DEFAULT_IMAGE_URL = "https://www.google.com";
 
     public void createTeam(final TeamCreateRequest request, final MultipartFile file, final Long memberId) {
         // TODO: 팀 생성자를 팀 관리자로 등록 (2024/5/9 완료)
         Member member = validateExistMember(memberId);
-        final String imageUrl = s3ImageFileService.upload(file);
+        final String imageUrl = (file != null && !file.isEmpty()) ? s3ImageFileService.upload(file) : DEFAULT_IMAGE_URL;
         try {
             final Team team = Team.builder()
                     .name(request.name())
