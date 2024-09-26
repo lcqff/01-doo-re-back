@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import doore.helper.IntegrationTest;
@@ -240,7 +239,7 @@ public class StudyCommandServiceTest extends IntegrationTest {
             void deleteStudy_정상적으로_스터디를_삭제할_수_있다_성공() throws Exception {
                 studyCommandService.deleteStudy(study.getId(), memberId);
                 final List<Study> studies = studyRepository.findAll();
-                assertTrue(studies.get(0).getIsDeleted());
+                assertThat(studies.size()).isEqualTo(0);
             }
 
             @Test
@@ -254,8 +253,7 @@ public class StudyCommandServiceTest extends IntegrationTest {
                         study.getId());
 
                 assertThat(beforeCurriculumItems.size()).isEqualTo(2);
-                assertThat(afterCurriculumItems.get(0).getIsDeleted()).isEqualTo(true);
-                assertThat(afterCurriculumItems.get(1).getIsDeleted()).isEqualTo(true);
+                assertThat(afterCurriculumItems.size()).isEqualTo(0);
             }
 
             @Test
