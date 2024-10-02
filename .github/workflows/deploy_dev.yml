@@ -75,6 +75,9 @@ jobs:
       - name: Start Containers
         run: docker compose -p doo-re up -d
 
+      - name: Wait for MySQL to be ready
+        run: sleep 10
+
       - name: Check MySQL Container Status
         run: docker logs doo-re-db
 
