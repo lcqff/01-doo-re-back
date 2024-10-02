@@ -76,7 +76,7 @@ jobs:
         run: docker compose -p doo-re up -d
 
       - name: Check MySQL Container Status
-        run: docker ps | grep db
+        run: docker logs doo-re-db
 
       - name: Check MySQL Database Connection
         run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT 1"
