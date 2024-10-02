@@ -73,7 +73,7 @@ jobs:
 #          echo '${{ secrets.APPLICATION_DEPLOY_YML }}' >> application-deploy.yml
 
       - name: Start Containers
-        run: docker compose -p doo-re up -d -e SPRING_PROFILES_ACTIVE=dev
+        run: docker compose -p doo-re up -d
 
       - name: Check MySQL Container Status
         run: docker ps | grep db
