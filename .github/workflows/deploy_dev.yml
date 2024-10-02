@@ -78,6 +78,9 @@ jobs:
       - name: Check MySQL Container Status
         run: docker ps | grep db
 
+      - name: Check MySQL Database Connection
+        run: docker exec -i doo-re-db mysql -u ${{ secrets.MYSQL_USER }} -p ${{ secrets.MYSQL_PASSWORD }} -e "SELECT 1"
+
       - name: Gradle Build & Test
         uses: gradle/gradle-build-action@v2
         with:
