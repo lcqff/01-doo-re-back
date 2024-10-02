@@ -75,6 +75,9 @@ jobs:
       - name: Start Containers
         run: docker compose -p doo-re up -d
 
+      - name: Check MySQL Container Status
+        run: docker ps | grep db
+
       - name: Gradle Build & Test
         uses: gradle/gradle-build-action@v2
         with:
