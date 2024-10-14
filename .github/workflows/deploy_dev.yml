@@ -84,11 +84,15 @@ jobs:
       # - name: Check DB Env
       #   run: docker exec -i doo-re-db printenv SPRING_PROFILES_ACTIVE
 
-      - name: Check MySQL Database Connection
-        run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT 1"
-      
-      #   run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT * from doore.member"
+      - name: Initialize Database Schema
+        run: |
+          echo "Initializing database schema..."
+          docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} ${MYSQL_DATABASE} < ./src/main/resources/schema.sql
 
+      - name: Check MySQL Database Connection
+        run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT * from doore.member"
+        # run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT 1"
+      
       - name: Gradle Build & Test
         uses: gradle/gradle-build-action@v2
         with:
