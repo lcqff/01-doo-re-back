@@ -85,7 +85,7 @@ jobs:
         run: docker exec -i doo-re-db printenv SPRING_PROFILES_ACTIVE
 
       - name: Check MySQL Database Connection
-        run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT * from member"
+        run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT * from doore.member"
 
       - name: Gradle Build & Test
         uses: gradle/gradle-build-action@v2
