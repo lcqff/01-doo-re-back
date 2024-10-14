@@ -79,7 +79,7 @@ jobs:
         run: sleep 10
 
       - name: Check MySQL Container Status
-        run: docker logs doo-re-db
+        run: docker logs db
 
       # - name: Check DB Env
       #   run: docker exec -i doo-re-db printenv SPRING_PROFILES_ACTIVE
