@@ -87,7 +87,7 @@ jobs:
       - name: Initialize Database Schema
         run: |
           echo "Initializing database schema..."
-          docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} ${MYSQL_DATABASE} < ./src/main/resources/schema.sql
+          docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} doore < ./src/main/resources/schema.sql
 
       - name: Check MySQL Database Connection
         run: docker exec -i doo-re-db mysql -u${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} -e "SELECT * from doore.member"
