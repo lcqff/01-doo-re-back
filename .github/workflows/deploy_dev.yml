@@ -97,7 +97,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 8.5
-          arguments: build --info
+          arguments: build
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'ref/heads/develop' }}
 
       - run: java -Djarmode=layertools -jar build/libs/doore-0.0.1-SNAPSHOT.jar extract
