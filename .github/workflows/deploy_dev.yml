@@ -116,6 +116,12 @@ jobs:
           ${GITHUB_SHA::8}.tar.gz \
           ${{ secrets.S3_DEV_BACK_LOCATION }}/${GITHUB_SHA::8}.tar.gz
 
+      # S3 업로드 확인 Workflow
+      - name: Verify S3 Upload
+        run: |
+          aws s3 ls --region ${{ secrets.AWS_REGION }} \
+          ${{ secrets.S3_DEV_BACK_LOCATION }}/
+
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
